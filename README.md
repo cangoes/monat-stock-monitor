@@ -1,11 +1,20 @@
-# Monitor de stock MONAT — Australia y Nueva Zelanda
+# Monitor de stock MONAT: todos los mercados, por región
 
 Cada lunes a las 7:00 a. m. (hora de Bogotá) revisa todos los productos de
-`shop.mymonat.com/shop/t/categories/all-products` en **AU** y **NZ**. Envía un mensaje con:
+`shop.mymonat.com/shop/t/categories/all-products` en cada mercado y genera **un reporte por región** con:
 
 - los productos que **se agotaron** desde el lunes anterior;
 - los productos que **volvieron a tener stock**;
 - los productos nuevos o que dejaron de aparecer en el listado, si los hay.
+
+| Región | Mercados |
+|---|---|
+| **NA**: Norteamérica | US Estados Unidos, CA Canadá |
+| **LATAM**: Latinoamérica | MX México, DO República Dominicana, PA Panamá |
+| **EU**: Europa | GB Reino Unido, IE Irlanda, ES España, FR Francia, BE Bélgica, DE Alemania, AT Austria, IT Italia, CH Suiza, PL Polonia, LT Lituania, MT Malta (tienda "Rest of Europe") |
+| **APAC**: Asia-Pacífico | AU Australia, NZ Nueva Zelanda |
+
+Por ahora no se incluyen **Costa Rica**, porque su tienda no tenía productos el 18-nov-2026, ni **Colombia**, que aún no está lanzada. Cuando tengan productos, se agregan en `MARKETS` (CR = `market_id 30`, CO = `market_id 22`).
 
 Cada producto trae su link en el formato con protocolo de mercado, listo para pegar en el array del mercado:
 
@@ -15,59 +24,69 @@ Cada producto trae su link en el formato con protocolo de mercado, listo para pe
   Link anterior: https://corp.mymonat.com/shop/products/barrier-booster-ceramide-infusion-toner-6000006005so?globallanguage=en&globalmarket=au
 ```
 
-El link cambia cuando un producto pasa a su versión "SO" (agotado) o vuelve a la versión normal. Si el link es distinto al de la semana anterior, el reporte muestra también el **Link anterior**, para buscarlo y reemplazarlo en el array. El idioma (`globallanguage`) se configura por mercado en `link_language`, dentro de `MARKETS`.
+El link cambia cuando un producto pasa a su versión "SO" (agotado) o vuelve a la versión normal. Si el link es distinto al de la semana anterior, el reporte muestra también el **Link anterior**, para buscarlo y reemplazarlo en el array.
+
+El idioma del link (`globallanguage`) es el del mercado:
+- `en`: US, CA, GB, IE, MT, AU y NZ.
+- `es`: MX, DO, PA y ES.
+- `fr`: FR y BE.
+- `de`: DE, AT y CH.
+- `it`: IT.
+- `pl`: PL.
+- `lt`: LT.
+
+Se cambia en `link_language`, dentro de `MARKETS`. Los nombres de los productos salen en el idioma de cada tienda.
 
 ## Cómo comprueba que está en el mercado correcto
 
-El sitio usa la misma URL para todos los mercados. Por eso, en cada mercado el script abre una sesión nueva, selecciona el país con `change_site_market` (AU = `market_id 18`, NZ = `market_id 20`) y verifica:
+El sitio usa la misma URL para todos los mercados. Por eso, en cada mercado el script abre una sesión nueva, selecciona el país con `change_site_market` (su `market_id`) y verifica:
 
-| Señal | AU | NZ |
-|---|---|---|
-| Cookie `site_market_id` | 18 | 20 |
-| Bandera del encabezado | Monat AU | Monat NZ |
-| Precio Retail de GLOSS MODE Shine Infusion Conditioner (SKU 6000007063) | $75–110 (hoy $91) | $95–135 (hoy $113) |
-| Cantidad de productos | ≥ 50 | ≥ 50 |
+1. **Cookie `site_market_id`**: debe ser igual al `market_id` del mercado.
+2. **Bandera del encabezado**: por ejemplo "Monat DE". Malta no muestra bandera.
+3. **Moneda**: al menos el 90% de los precios en la moneda del mercado. Es `$` en US, CA, MX, DO, PA, AU y NZ; `£` en GB; `€` en la eurozona; `CHF` en CH y `zł` en PL.
+4. **Precio de referencia**: el precio Retail del GLOSS MODE Shine Infusion Conditioner (SKU 6000007063), solo en los mercados donde existe ese producto. Debe caer en su rango; el 18-nov-2026 costaba US $57, CA $79, GB £54, AU $91 y NZ $113.
+5. **Cantidad mínima de productos**: cerca de la mitad de los que había el 18-nov-2026.
 
-Como referencia, en US ese producto cuesta $57. Si una señal falla, ese mercado **no se compara y su historial no se toca**. El mensaje avisa qué señal falló y la ejecución queda en rojo en GitHub.
-
-Si MONAT cambia el precio de referencia, ajusta `ref_price_range` en `monitor.py`.
+Si una señal falla, ese mercado **no se compara y su historial no se toca**. El reporte de su región avisa qué señal falló y la ejecución queda en rojo en GitHub. Las demás regiones y mercados siguen normalmente.
 
 ## Cómo detecta "agotado"
 
-Un producto está agotado cuando su botón **ADD** está deshabilitado (clase `disabled`).
+Un producto está agotado cuando su botón para agregar al carrito está deshabilitado (clase `disabled`).
 Cuando un producto se agota, MONAT a veces publica una versión con el sufijo **SO** en el SKU (`6000006005` → `6000006005so`). Por eso la comparación se hace por el **SKU sin el sufijo**. Un producto cuenta como disponible si cualquiera de sus versiones lo está.
 
-## Puesta en marcha (unos 10 minutos)
+## Notificación: Asana
 
-1. Crea un repositorio **privado** en GitHub y sube todo el contenido de esta carpeta, incluida `.github/`.
-2. Configura el canal del mensaje en *Settings → Secrets and variables → Actions → New repository secret*. Usa uno o varios:
-   - **Asana** (canal en uso): secreto `ASANA_TOKEN` con un *Personal Access Token*. Se crea en https://app.asana.com/0/my-apps → *Create new token*. Pégalo directo en GitHub, nunca en un chat ni en un correo.
-     Cada barrido crea una tarea "MONAT Stock — AAAA-MM-DD (Wnn)", asignada a ti y con vencimiento ese día. La descripción trae el reporte con links, y hay una **subtarea por cada producto que se agotó o volvió a tener stock**, para marcarla al actualizar el array de ese mercado.
-     Las tareas se crean en el proyecto **MONAT SHOP STOCK**: el script lo busca por nombre (variable `ASANA_PROJECT_NAME` en el workflow). Si le cambias el nombre al proyecto, actualiza esa línea del workflow. Si no lo encuentra, la tarea va a *Mis tareas* y el log lo avisa.
-     Como el token actúa en nombre de tu propia cuenta, Asana puede no enviarte una notificación por una tarea que "tú mismo" creaste; la tarea igual aparece en *Mis tareas* con su fecha.
-   - **Google Chat** (solo cuentas de Google Workspace): `GOOGLE_CHAT_WEBHOOK_URL`, el webhook del Space. Para crearlo, en Google Chat abre el Space y entra a *Apps e integraciones → Webhooks → Agregar webhook*, y copia la URL.
-     El reporte llega como un mensaje, o como varios en el mismo hilo si es largo. Al final trae el link a la carpeta de esa semana en `historial/`.
-   - **Slack:** `SLACK_WEBHOOK_URL`, un Incoming Webhook del canal.
-   - **Teams:** `TEAMS_WEBHOOK_URL`, un webhook del canal.
-   - **Correo:** `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_TO` (puedes poner varios separados por coma) y, opcionalmente, `MAIL_FROM`. Con Gmail, usa una *contraseña de aplicación*.
-3. Ve a *Actions → MONAT stock monitor → Run workflow* para hacer la **primera ejecución de prueba**.
-   - La primera vez guarda el punto de partida y lista los productos agotados de hoy.
-   - El reporte aparece en el resumen de la ejecución y en la carpeta de la semana dentro de `historial/`.
-4. Si sale en verde con "Mercado verificado ✅" en AU y NZ, ya está listo. Desde ahí corre solo cada lunes.
+Secreto `ASANA_TOKEN` con un *Personal Access Token*. Se crea en https://app.asana.com/0/my-apps → *Create new token*. Pégalo directo en GitHub, nunca en un chat ni en un correo.
 
-Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repositorio).
+Cada lunes se crea **una tarea por región** en el proyecto **MONAT SHOP STOCK**: "MONAT Stock NA — AAAA-MM-DD (Wnn)", "MONAT Stock LATAM — …", "MONAT Stock EU — …" y "MONAT Stock APAC — …".
+- **Asignación:** cada tarea va asignada a ti y vence ese día.
+- **Descripción:** el reporte de la región, con links.
+- **Subtareas:** una por cada producto que se agotó o volvió a tener stock (ej. "DE · Se agotó · …"), para marcarla al actualizar el array de ese mercado.
+
+El script busca el proyecto por nombre (variable `ASANA_PROJECT_NAME` en el workflow). Si le cambias el nombre al proyecto, actualiza esa línea del workflow. Si no lo encuentra, la tarea va a *Mis tareas* y el log lo avisa.
+
+Como el token actúa en nombre de tu propia cuenta, Asana puede no enviarte una notificación por una tarea que "tú mismo" creaste; las tareas igual aparecen en el proyecto con su fecha.
+
+Otros canales que el script también soporta (un mensaje por región), cada uno con su secreto:
+- **Google Chat** (`GOOGLE_CHAT_WEBHOOK_URL`): solo funciona con cuentas de Google Workspace.
+- **Slack** (`SLACK_WEBHOOK_URL`).
+- **Correo**: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_TO` y, opcionalmente, `MAIL_FROM`.
+
+## Ejecutarlo a mano
+
+En *Actions → MONAT stock monitor → Run workflow*. El barrido de todos los mercados tarda unos 10 minutos. Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repositorio).
 
 ## Archivos
 
-- `monitor.py`: el barrido, la verificación, la comparación y el envío.
-- `state/AU.json`, `state/NZ.json`: el último estado conocido. Los genera y actualiza el workflow.
-- `historial/`: una carpeta por semana, con el nombre del lunes y el número de semana ISO (ej. `2026-11-23_W48/`). Cada carpeta tiene:
-  - `reporte.md`: el mismo texto que se envía en el mensaje.
-  - `estado_AU.json` y `estado_NZ.json`: copia exacta del estado de esa semana, para compararla con cualquier otra semana.
+- `monitor.py`: el barrido, la verificación, la comparación y el envío. La lista de mercados está en `MARKETS` y la de regiones en `REGIONS`.
+- `state/<MERCADO>.json`: el último estado conocido de cada mercado. Los genera y actualiza el workflow.
+- `historial/`: una carpeta por semana, con el nombre del lunes y el número de semana ISO (ej. `2026-11-23_W48/`). Dentro hay una subcarpeta por región (`NA/`, `LATAM/`, `EU/`, `APAC/`), con:
+  - `reporte.md`: el mismo texto que se envía en el mensaje de esa región.
+  - `estado_<MERCADO>.json`: copia exacta del estado de esa semana de cada mercado, para compararla con cualquier otra semana.
 
   Si el workflow se ejecuta más de una vez en la misma semana, la carpeta de esa semana se sobrescribe con el último barrido.
 
-  El **primer barrido** (el punto de partida de cada mercado) se guarda aparte, en la subcarpeta `primer-barrido/` de su semana, y nunca se sobrescribe. El del 18-nov-2026 está en `historial/2026-11-16_W47/primer-barrido/`, con su reporte original y el estado de ese momento.
+  El **primer barrido** (el punto de partida) de cada mercado se guarda aparte, en `primer-barrido/` dentro de su región y semana, y nunca se sobrescribe. El de AU y NZ (18-nov-2026) está en `historial/2026-11-16_W47/APAC/primer-barrido/`.
 - `tests/`: pruebas sin conexión (`pip install pytest && pytest`).
 
-Para agregar más mercados, añade una entrada en `MARKETS` dentro de `monitor.py`, con su `market_id`, el texto de la bandera y el rango de precio. Luego inclúyelo en la variable `MARKETS` del workflow.
+Para agregar un mercado, añade una línea en `MARKETS` (en `monitor.py`) con su región, `market_id`, `language_id`, idioma del link, moneda, bandera, mínimo de productos y, si existe el producto de referencia, su rango de precio. No hace falta cambiar el workflow: corre todos los mercados de `MARKETS`.

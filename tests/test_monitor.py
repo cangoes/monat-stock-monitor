@@ -75,7 +75,7 @@ class FakeSession:
 
 def catalog_au(oos_toner=True, cleanser_back=False):
     cards = [card(monitor.REFERENCE_SKU, "MONAT GLOSS MODE™ Shine Infusion Conditioner", 91)]
-    cards += [card(f"60000090{i:02d}", f"Producto {i}", 50 + i) for i in range(60)]
+    cards += [card(f"60000090{i:02d}", f"Producto {i}", 50 + i) for i in range(80)]
     if oos_toner:
         cards.append(card("6000006005so", "Barrier Booster™ Ceramide Infusion Toner - Out of Stock", 80, disabled=True))
     else:
@@ -159,22 +159,21 @@ def test_nz_price_check(tmp_dirs, monkeypatch):
 def test_weekly_history(tmp_dirs, monkeypatch):
     run(monkeypatch, {18: catalog_au()})
     r2 = run(monkeypatch, {18: catalog_au(oos_toner=False)})
-    folder = monitor.save_history([r2], "reporte", "2026-11-25")  # miércoles -> carpeta del lunes de esa semana
-    assert folder.name == "2026-11-23_W48"
+    folder = monitor.save_history([r2], "reporte", "2026-11-25", "APAC")  # miércoles -> carpeta del lunes
+    assert folder.name == "APAC" and folder.parent.name == "2026-11-23_W48"
     assert sorted(f.name for f in folder.iterdir()) == ["estado_AU.json", "reporte.md"]
 
 
 def test_first_scan_is_kept_separately(tmp_dirs, monkeypatch):
     r1 = run(monkeypatch, {18: catalog_au()})
-    folder = monitor.save_history([r1], "primer reporte", "2026-11-23")
+    folder = monitor.save_history([r1], "primer reporte", "2026-11-23", "APAC")
     first = folder / "primer-barrido"
     assert (first / "reporte.md").read_text() == "primer reporte"
-    assert not list(first.glob("*.xlsx"))
     assert (first / "estado_AU.json").exists()
 
     # Otra ejecución la misma semana sobrescribe la carpeta semanal, pero no el primer barrido
     r2 = run(monkeypatch, {18: catalog_au(oos_toner=False)})
-    monitor.save_history([r2], "segundo reporte", "2026-11-24")
+    monitor.save_history([r2], "segundo reporte", "2026-11-24", "APAC")
     assert (folder / "reporte.md").read_text() == "segundo reporte"
     assert (first / "reporte.md").read_text() == "primer reporte"
 
@@ -238,11 +237,11 @@ def test_asana_task_and_subtasks(tmp_dirs, monkeypatch):
     monkeypatch.setattr(monitor.requests, "post", fake_post)
     monkeypatch.delenv("ASANA_PROJECT_GID", raising=False)
 
-    url, n = monitor.send_asana("tok", [r2], "2026-11-23", "https://github.com/x/y/tree/main/historial/w")
+    url, n = monitor.send_asana("tok", [r2], "2026-11-23", "https://github.com/x/y/tree/main/historial/w", "APAC")
     assert url == "https://app.asana.com/0/0/T1" and n == 2
 
     task = calls[1][2]["json"]["data"]
-    assert task["name"] == "MONAT Stock — 2026-11-23 (W48)"
+    assert task["name"] == "MONAT Stock APAC — 2026-11-23 (W48)"
     assert task["workspace"] == "WS1" and task["assignee"] == "me" and task["due_on"] == "2026-11-23"
     root = ET.fromstring(task["html_notes"])  # debe ser XML válido para Asana
     links = [a.get("href") for a in root.iter("a")]
@@ -283,3 +282,56 @@ def test_asana_project_lookup_by_name(monkeypatch):
     monkeypatch.setattr(monitor.requests, "get", fake_get)
     assert monitor.find_asana_project({}, "monat shop stock") == "42"
     assert monitor.find_asana_project({}, "No existe") is None
+
+
+
+def test_multi_currency_prices_and_markets():
+    cases = [
+        ("Retail :  $91.00 | VIP : $77.00", (91.0, "$")),
+        ("Minorista : $1,124.00", (1124.0, "$")),
+        ("Cliente : 42.00 € | VIP : 36.00 €", (42.0, "€")),
+        ("Cena detaliczna : 180.00 zł | VIP : 153.00 zł", (180.0, "zł")),
+        ("Einzelhandel : 50.00 CHF | VIP : 43.00 CHF", (50.0, "CHF")),
+        ("Retail : £54.00 | VIP : £45.00", (54.0, "£")),
+    ]
+    for text, expected in cases:
+        assert monitor.parse_price_currency(text) == expected, text
+
+    # Un nombre con ":" no confunde el precio
+    html = page([card("6000000001", "Kit: Shampoo + Conditioner", 42)])
+    assert monitor.parse_products(html)[0].price == 42.0
+
+    regions = {m["region"] for m in monitor.MARKETS.values()}
+    assert regions == set(monitor.REGIONS)
+    ids = [m["market_id"] for m in monitor.MARKETS.values()]
+    assert len(ids) == len(set(ids))
+
+
+def test_euro_market_verification(tmp_dirs, monkeypatch):
+    def eur_card(sku, name, price, disabled=False):
+        return card(sku, name, price, disabled).replace("Retail :", "Einzelhandel :").replace(f"${price:.2f}", f"{price:.2f} €")
+
+    cards = [eur_card(f"60000090{i:02d}", f"Produkt {i}", 40 + i) for i in range(50)]
+    cards.append(eur_card("6000006005so", "Toner - Out of Stock", 30, disabled=True))
+    flags = {**FLAGS, 25: "Monat DE"}
+    monkeypatch.setattr(monitor.requests, "Session", lambda: FakeSession({25: cards}, flags))
+    r = monitor.run_market("DE", monitor.MARKETS["DE"], "2026-11-23T12:00:00Z")
+    assert r.verified, r.checks
+    assert r.checks["moneda"][0] and "precio de referencia" not in r.checks
+
+    # Si el sitio se queda en US (dólares, bandera US), no se verifica
+    us = [card(f"60000090{i:02d}", f"P{i}", 10) for i in range(50)]
+    monkeypatch.setattr(monitor.requests, "Session", lambda: FakeSession({2: us}, flags, set_market=False))
+    r = monitor.run_market("DE", monitor.MARKETS["DE"], "2026-11-23T12:00:00Z")
+    assert not r.verified and not r.checks["moneda"][0] and not r.checks["bandera del encabezado"][0]
+
+
+def test_asana_compact_when_too_long(monkeypatch):
+    big = {f"6{i:09d}": {"name": f"Producto con nombre largo número {i}", "out": True, "skus": [f"6{i:09d}so"],
+                         "url": f"https://shop.mymonat.com/shop/products/producto-largo-{i}-6{i:09d}so?taxon_id=30"}
+           for i in range(600)}
+    r = monitor.MarketResult(code="DE", verified=True, baseline=True, products=big)
+    full = monitor.build_asana_html([r], "https://github.com/x")
+    assert len(full) > monitor.ASANA_NOTES_LIMIT
+    compact = monitor.build_asana_html([r], "https://github.com/x", compact=True)
+    assert len(compact) < 2000 and "600 productos agotados" in compact
