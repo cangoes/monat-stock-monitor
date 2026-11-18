@@ -566,16 +566,25 @@ def build_workbook(results: list[MarketResult], today: str, path: Path) -> None:
 
 def save_history(results: list[MarketResult], report: str, today: str) -> Path:
     folder = week_folder(today)
+    # El primer barrido (punto de partida) se guarda aparte y nunca se sobrescribe,
+    # aunque el workflow se vuelva a ejecutar esa misma semana.
+    first = folder / "primer-barrido"
+    if any(r.baseline for r in results) and not first.exists():
+        _write_history(first, [r for r in results if r.baseline], report, today, f"primer-barrido_{today}")
+    _write_history(folder, results, report, today, folder.name)
+    return folder
+
+
+def _write_history(folder: Path, results: list[MarketResult], report: str, today: str, tag: str) -> None:
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "reporte.md").write_text(report, encoding="utf-8")
-    build_workbook(results, today, folder / f"reporte_stock_{folder.name}.xlsx")
+    build_workbook(results, today, folder / f"reporte_stock_{tag}.xlsx")
     for r in results:  # copia del estado de esa semana, solo de mercados verificados
         if r.verified and not r.error:
             (folder / f"estado_{r.code}.json").write_text(
                 json.dumps({"scanned_on": today, "products": r.products}, ensure_ascii=False, indent=2, sort_keys=True),
                 encoding="utf-8",
             )
-    return folder
 
 
 def main() -> int:

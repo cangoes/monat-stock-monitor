@@ -64,6 +64,8 @@ Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repo
   - `estado_AU.json` y `estado_NZ.json`: copia exacta del estado de esa semana, para compararla con cualquier otra semana.
 
   Si el workflow se ejecuta más de una vez en la misma semana, la carpeta de esa semana se sobrescribe con el último barrido.
+
+  El **primer barrido** (el punto de partida de cada mercado) se guarda aparte, en la subcarpeta `primer-barrido/` de su semana, y nunca se sobrescribe. El del 18-nov-2026 está en `historial/2026-11-16_W47/primer-barrido/`, con su reporte original, la hoja de cálculo y el estado de ese momento.
 - `tests/`: pruebas sin conexión (`pip install pytest && pytest`).
 
 Para agregar más mercados, añade una entrada en `MARKETS` dentro de `monitor.py`, con su `market_id`, el texto de la bandera y el rango de precio. Luego inclúyelo en la variable `MARKETS` del workflow.

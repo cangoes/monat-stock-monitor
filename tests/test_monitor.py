@@ -179,3 +179,18 @@ def test_weekly_history_and_spreadsheet(tmp_dirs, monkeypatch):
     inv = wb["Inventario AU"]
     assert inv.max_row == 1 + len(r2.products)
     assert wb["Resumen"]["E5"].value == '=COUNTIF(\'Inventario AU\'!$C:$C,"Agotado")'
+
+
+def test_first_scan_is_kept_separately(tmp_dirs, monkeypatch):
+    r1 = run(monkeypatch, {18: catalog_au()})
+    folder = monitor.save_history([r1], "primer reporte", "2026-11-23")
+    first = folder / "primer-barrido"
+    assert (first / "reporte.md").read_text() == "primer reporte"
+    assert (first / "reporte_stock_primer-barrido_2026-11-23.xlsx").exists()
+    assert (first / "estado_AU.json").exists()
+
+    # Otra ejecución la misma semana sobrescribe la carpeta semanal, pero no el primer barrido
+    r2 = run(monkeypatch, {18: catalog_au(oos_toner=False)})
+    monitor.save_history([r2], "segundo reporte", "2026-11-24")
+    assert (folder / "reporte.md").read_text() == "segundo reporte"
+    assert (first / "reporte.md").read_text() == "primer reporte"
