@@ -1,4 +1,4 @@
-# Reporte de stock MONAT — 2026-11-18
+# Reporte de stock MONAT — Asia-Pacífico (APAC) — 2026-11-18
 
 ## Australia (AU)
 Mercado verificado ✅ · 141 productos · 20 agotados

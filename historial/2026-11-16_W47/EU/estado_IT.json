@@ -1,0 +1,469 @@
+{
+  "products": {
+    "6000000266": {
+      "name": "Siero idratante a doppia azione",
+      "out": false,
+      "skus": [
+        "6000000266"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/double-action-hydrating-serum-6000000266?taxon_id=30"
+    },
+    "6000000506": {
+      "name": "Skin Revitalizing Essence™",
+      "out": false,
+      "skus": [
+        "6000000506"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/skin-revitalizing-essence?taxon_id=30"
+    },
+    "6000000507": {
+      "name": "Night Haven™ Crema notte antietà",
+      "out": false,
+      "skus": [
+        "6000000507"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/night-heaven-overnight-age-control-cream?taxon_id=30"
+    },
+    "6000000510": {
+      "name": "Rewind™ Age Control Nectar",
+      "out": false,
+      "skus": [
+        "6000000510"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/rewind-age-control-nectar?taxon_id=30"
+    },
+    "6000000511": {
+      "name": "Eye Smooth™ Crema nutriente per contorno occhi",
+      "out": false,
+      "skus": [
+        "6000000511"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/eye-smooth?taxon_id=30"
+    },
+    "6000000513": {
+      "name": "BE GENTLE™ Creamy Cleanser",
+      "out": false,
+      "skus": [
+        "6000000513"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/creamy-cleanser?taxon_id=30"
+    },
+    "6000000514": {
+      "name": "BE GENTLE™ Nourishing Moisturizer",
+      "out": false,
+      "skus": [
+        "6000000514"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/nourishing-moisturizer?taxon_id=30"
+    },
+    "6000000515": {
+      "name": "BE BALANCED™ Foamy Cleanser",
+      "out": false,
+      "skus": [
+        "6000000515"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/be-balanced-foamy-cleanser?taxon_id=30"
+    },
+    "6000000516": {
+      "name": "BE BALANCED™ Lightweight Moisturizer",
+      "out": false,
+      "skus": [
+        "6000000516"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/lightweight-moisturizer?taxon_id=30"
+    },
+    "6000001458": {
+      "name": "MONAT Hydration Booster™ Siero all'acido ialuronico Plus",
+      "out": false,
+      "skus": [
+        "6000001458"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/hydration-booster-serum?taxon_id=30"
+    },
+    "6000002979": {
+      "name": "IR Clinical™ Siero anti-diradamento per il cuoio capelluto",
+      "out": false,
+      "skus": [
+        "6000002979"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/ir-clinical-hair-thinning-defense-6000002979?taxon_id=30"
+    },
+    "6000004126": {
+      "name": "MONAT STUDIO ONE™ Spray termoprotettore",
+      "out": true,
+      "skus": [
+        "6000004126so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-studio-one-heat-protectant-spray-6000004126so?taxon_id=30"
+    },
+    "6000004507": {
+      "name": "Balsamo idratante avanzato",
+      "out": false,
+      "skus": [
+        "6000004507"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/advanced-hydrating-conditioner-6000004507?taxon_id=30"
+    },
+    "6000004915": {
+      "name": "MONAT Scalp Comfort™ Siero riequilibrante",
+      "out": false,
+      "skus": [
+        "6000004915"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-scalp-comfort-rebalancing-serum-6000004915?taxon_id=30"
+    },
+    "6000005116": {
+      "name": "Scrub purificante per il cuoio capelluto",
+      "out": false,
+      "skus": [
+        "6000005116"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/scalp-purifying-scrub-6000005116?taxon_id=30"
+    },
+    "6000005248": {
+      "name": "MONAT BLACK™ Shampoo + Balsamo",
+      "out": false,
+      "skus": [
+        "6000005248"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-black-shampoo-conditioner-6000005248?taxon_id=30"
+    },
+    "6000005249": {
+      "name": "Maschera super idratante",
+      "out": false,
+      "skus": [
+        "6000005249"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/super-moisture-masque-6000005249?taxon_id=30"
+    },
+    "6000005278": {
+      "name": "IR Clinical™ Shampoo addensante",
+      "out": false,
+      "skus": [
+        "6000005278"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/ir-clinical-thickening-shampoo-6000005278?taxon_id=30"
+    },
+    "6000005279": {
+      "name": "IR Clinical™ Balsamo addensante",
+      "out": false,
+      "skus": [
+        "6000005279"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/ir-clinical-thickening-conditioner-6000005279?taxon_id=30"
+    },
+    "6000005283": {
+      "name": "REJUVABEADS®",
+      "out": false,
+      "skus": [
+        "6000005283"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/rejuvabeads-6000005283?taxon_id=30"
+    },
+    "6000005284": {
+      "name": "Replenish™ Maschera",
+      "out": false,
+      "skus": [
+        "6000005284"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/replenish-masque-6000005284?taxon_id=30"
+    },
+    "6000005285": {
+      "name": "MONAT STUDIO ONE The Champ™ Shampoo secco trattante",
+      "out": false,
+      "skus": [
+        "6000005285"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-studio-one-the-champ-conditioning-dry-shampoo-6000005285?taxon_id=30"
+    },
+    "6000005287": {
+      "name": "Risciacquo purificante all’aceto",
+      "out": false,
+      "skus": [
+        "6000005287"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/purifying-vinegar-rinse-6000005287?taxon_id=30"
+    },
+    "6000005288": {
+      "name": "Purifying Vinegar Shampoo",
+      "out": true,
+      "skus": [
+        "6000005288so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/purifying-vinegar-shampoo-6000005288so?taxon_id=30"
+    },
+    "6000005291": {
+      "name": "Shampoo idratante avanzato",
+      "out": true,
+      "skus": [
+        "6000005291so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/advanced-hydrating-shampoo-6000005291so?taxon_id=30"
+    },
+    "6000005295": {
+      "name": "Renew™ Balsamo",
+      "out": false,
+      "skus": [
+        "6000005295"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/renew-conditioner-6000005295?taxon_id=30"
+    },
+    "6000005356": {
+      "name": "MONAT STUDIO ONE™ Crema anti-crespo",
+      "out": false,
+      "skus": [
+        "6000005356"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-studio-one-blow-out-cream-6000005356?taxon_id=30"
+    },
+    "6000005357": {
+      "name": "Revitalize™ Balsamo Volumizzante",
+      "out": false,
+      "skus": [
+        "6000005357"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/volumizing-revitalize-conditioner-6000005357?taxon_id=30"
+    },
+    "6000005359": {
+      "name": "Shampoo Volumizzante Revive™",
+      "out": false,
+      "skus": [
+        "6000005359"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/volumizing-revive-shampoo-6000005359?taxon_id=30"
+    },
+    "6000005371": {
+      "name": "Smoothing Anti-Frizz™ Balsamo ultra lisciante",
+      "out": false,
+      "skus": [
+        "6000005371"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/smoothing-anti-frizz-deep-conditioner-6000005371?taxon_id=30"
+    },
+    "6000005372": {
+      "name": "Smoothing Anti-Frizz™ Trattamento Intensivo",
+      "out": false,
+      "skus": [
+        "6000005372"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/smoothing-anti-frizz-deep-intensive-treatment-6000005372?taxon_id=30"
+    },
+    "6000005373": {
+      "name": "Smoothing Anti-Frizz™ Shampoo",
+      "out": true,
+      "skus": [
+        "6000005373so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/smoothing-anti-frizz-shampoo-6000005373so?taxon_id=30"
+    },
+    "6000005486": {
+      "name": "MONAT Scalp Comfort™ Trattamento riequilibrante del cuoio capelluto",
+      "out": true,
+      "skus": [
+        "6000005486so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-scalp-comfort-rebalancing-scalp-treatment-6000005486so?taxon_id=30"
+    },
+    "6000005488": {
+      "name": "MONAT Curl Perfection™ Spray rinfrescante",
+      "out": false,
+      "skus": [
+        "6000005488"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-curl-perfection-refresh-spray-6000005488?taxon_id=30"
+    },
+    "6000005489": {
+      "name": "MONAT Curl Perfection™ Crema per definire i ricci - Il tuo ordine verrà spedito nella settimana che inizia il 9 Novembre.",
+      "out": false,
+      "skus": [
+        "6000005489"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-curl-perfection-curl-defining-cream-6000005489?taxon_id=30"
+    },
+    "6000005490": {
+      "name": "MONAT Curl Perfection™ Gel idratante e fissante",
+      "out": false,
+      "skus": [
+        "6000005490"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-curl-perfection-hydrate-hold-gelee-6000005490?taxon_id=30"
+    },
+    "6000005756": {
+      "name": "REJUVENIQE®",
+      "out": false,
+      "skus": [
+        "6000005756"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/rejuveniqe-oil-intensive-6000005756?taxon_id=30"
+    },
+    "6000005874": {
+      "name": "Sistema MONAT Scalp Comfort™",
+      "out": true,
+      "skus": [
+        "6000005874so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-scalp-comfort-system-6000005874so?taxon_id=30"
+    },
+    "6000006154": {
+      "name": "Renew™ Sistema idratante",
+      "out": false,
+      "skus": [
+        "6000006154"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/renew-hydrating-system-6000006154?taxon_id=30"
+    },
+    "6000006155": {
+      "name": "Sistema idratante avanzato",
+      "out": false,
+      "skus": [
+        "6000006155"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/advanced-hydrating-system-6000006155?taxon_id=30"
+    },
+    "6000006158": {
+      "name": "Sistema IR Clinical™",
+      "out": false,
+      "skus": [
+        "6000006158"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/ir-clinical-system-6000006158?taxon_id=30"
+    },
+    "6000006159": {
+      "name": "Sistema per la cura del cuoio capelluto",
+      "out": false,
+      "skus": [
+        "6000006159"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/scalp-care-system-6000006159?taxon_id=30"
+    },
+    "6000006303": {
+      "name": "Smoothing Anti-Frizz™ System II",
+      "out": true,
+      "skus": [
+        "6000006303so"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/smoothing-anti-frizz-system-ii-6000006303so?taxon_id=30"
+    },
+    "6000006943": {
+      "name": "Renew™ Shampoo",
+      "out": false,
+      "skus": [
+        "6000006943"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/renew-shampoo-6000006943?taxon_id=30"
+    },
+    "6000006945": {
+      "name": "Restore Balsamo senza risciacquo",
+      "out": false,
+      "skus": [
+        "6000006945"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/restore-leave-in-conditioner-6000006945?taxon_id=30"
+    },
+    "6000007036": {
+      "name": "MONAT BE BALANCED™ System",
+      "out": false,
+      "skus": [
+        "6000007036"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-be-balanced-system-6000007036?taxon_id=30"
+    },
+    "6000007037": {
+      "name": "MONAT BE GENTLE™ System",
+      "out": false,
+      "skus": [
+        "6000007037"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-be-gentle-system-6000007037?taxon_id=30"
+    },
+    "6000007046": {
+      "name": "Ivory - MONAT Modern Glow™ Skin Tint",
+      "out": false,
+      "skus": [
+        "6000007046"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/ivory-monat-modern-glow-skin-tint?taxon_id=30"
+    },
+    "6000007048": {
+      "name": "Beige - MONAT Modern Glow™ Skin Tint",
+      "out": false,
+      "skus": [
+        "6000007048"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/beige-monat-modern-glow-skin-tint?taxon_id=30"
+    },
+    "6000007051": {
+      "name": "Buff - MONAT Modern Glow™ Skin Tint",
+      "out": false,
+      "skus": [
+        "6000007051"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/buff-monat-modern-glow-skin-tint?taxon_id=30"
+    },
+    "6000007052": {
+      "name": "Honey - MONAT Modern Glow™ Skin Tint",
+      "out": false,
+      "skus": [
+        "6000007052"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/honey-monat-modern-glow-skin-tint?taxon_id=30"
+    },
+    "6000007053": {
+      "name": "Mocha - MONAT Modern Glow™ Skin Tint",
+      "out": false,
+      "skus": [
+        "6000007053"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/mocha-monat-modern-glow-skin-tint?taxon_id=30"
+    },
+    "6000007062": {
+      "name": "MONAT GLOSS MODE™ Gocce illuminanti",
+      "out": false,
+      "skus": [
+        "6000007062"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-glow-drops?taxon_id=30"
+    },
+    "6000007346": {
+      "name": "Sistema MONAT GLOSS MODE™",
+      "out": false,
+      "skus": [
+        "6000007346"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-system-6000007346?taxon_id=30"
+    },
+    "6000007429": {
+      "name": "Eye Smooth™ Siero",
+      "out": false,
+      "skus": [
+        "6000007429"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/eye-smooth-serum-6000007429?taxon_id=30"
+    },
+    "6000007637": {
+      "name": "MONAT GLOSS MODE™ Shampoo rinnovatore di luminosità",
+      "out": false,
+      "skus": [
+        "6000007637"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-radiance-reset-shampoo-6000007637?taxon_id=30"
+    },
+    "6000007638": {
+      "name": "MONAT GLOSS MODE™ Balsamo illuminante",
+      "out": false,
+      "skus": [
+        "6000007638"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-shine-infusion-conditioner-6000007638?taxon_id=30"
+    },
+    "6000007639": {
+      "name": "MONAT GLOSS MODE™ Spray illuminante districante e protettivo",
+      "out": false,
+      "skus": [
+        "6000007639"
+      ],
+      "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-detangle-protect-shine-mist-6000007639?taxon_id=30"
+    }
+  },
+  "scanned_on": "2026-11-18"
+}
