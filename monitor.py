@@ -501,20 +501,21 @@ def build_workbook(results: list[MarketResult], today: str, path: Path) -> None:
                 else "Sin cambios de stock esta semana.")
     _widths(ch, [10, 22, 14, 55, 90, 90])
 
-    # --- Inventario por mercado: copia completa del estado de esta semana ---
+    # --- Agotados por mercado: solo los productos sin stock esta semana ---
+    # (el estado completo, con los disponibles, queda en estado_<MERCADO>.json)
     for r in results:
-        ws = wb.create_sheet(f"Inventario {r.code}")
+        ws = wb.create_sheet(f"Agotados {r.code}")
         _header(ws, 1, ["SKU", "Producto", "Estado", "SKUs en el sitio", "Link"])
-        items = sorted(r.products.items(), key=lambda x: (not x[1]["out"], x[1]["name"].lower()))
+        items = sorted(((k, v) for k, v in r.products.items() if v["out"]), key=lambda x: x[1]["name"].lower())
         for i, (sku, item) in enumerate(items, start=2):
             ws.cell(row=i, column=1, value=sku)
             ws.cell(row=i, column=2, value=item["name"])
-            c = ws.cell(row=i, column=3, value="Agotado" if item["out"] else "Disponible")
-            c.fill = OUT_FILL if item["out"] else BACK_FILL
+            ws.cell(row=i, column=3, value="Agotado").fill = OUT_FILL
             ws.cell(row=i, column=4, value=", ".join(item.get("skus", [])))
             _link_cell(ws.cell(row=i, column=5), market_link(item["url"], r.code) if item.get("url") else None)
         if not items:
-            ws.cell(row=2, column=1, value="Sin datos: el barrido de este mercado no se completó o no se verificó (ver Resumen).")
+            ws.cell(row=2, column=2, value="Sin productos agotados." if r.verified and not r.error
+                    else "Sin datos: el barrido de este mercado no se completó o no se verificó (ver Resumen).")
         ws.freeze_panes = "A2"
         ws.auto_filter.ref = f"A1:E{max(len(items) + 1, 1)}"
         _widths(ws, [14, 60, 13, 28, 95])
@@ -528,7 +529,7 @@ def build_workbook(results: list[MarketResult], today: str, path: Path) -> None:
             "Se agotaron", "Volvieron a tener stock", "Nuevos", "Ya no aparecen", "Notas"]
     _header(rs, 4, cols)
     for i, r in enumerate(results, start=5):
-        inv = f"'Inventario {r.code}'"
+        inv = f"'Agotados {r.code}'"
         rs.cell(row=i, column=1, value=MARKETS[r.code]["name"])
         rs.cell(row=i, column=2, value=r.code)
         if r.error:
@@ -540,16 +541,19 @@ def build_workbook(results: list[MarketResult], today: str, path: Path) -> None:
             status = "Verificado"
             note = "Primer barrido (punto de partida)" if r.baseline else ""
         rs.cell(row=i, column=3, value=status).fill = BACK_FILL if status == "Verificado" else OUT_FILL
-        rs.cell(row=i, column=4, value=f'=COUNTIF({inv}!$C:$C,"Agotado")+COUNTIF({inv}!$C:$C,"Disponible")')
+        ok = r.verified and not r.error
+        total = rs.cell(row=i, column=4, value=len(r.products) if ok else None)
+        total.font = Font(name=FONT, color="0000FF")  # dato del barrido (no es fórmula)
         rs.cell(row=i, column=5, value=f'=COUNTIF({inv}!$C:$C,"Agotado")')
-        rs.cell(row=i, column=6, value=f'=COUNTIF({inv}!$C:$C,"Disponible")')
+        rs.cell(row=i, column=6, value=f"=IF(D{i}=\"\",\"\",D{i}-E{i})")
         for col, key in zip(range(7, 11), ("went_out", "back_in", "new_items", "removed")):
             rs.cell(row=i, column=col, value=f'=COUNTIFS(Cambios!$A:$A,$B{i},Cambios!$B:$B,"{CHANGE_LABELS[key]}")')
         rs.cell(row=i, column=11, value=note)
         for col in range(4, 11):
             rs.cell(row=i, column=col).number_format = "#,##0"
     last = 4 + len(results)
-    rs.cell(row=last + 2, column=1, value="Los conteos se calculan con fórmulas a partir de las hojas Inventario y Cambios.")
+    rs.cell(row=last + 2, column=1, value="Productos (en azul): total de productos leídos en el listado de ese mercado durante el barrido.")
+    rs.cell(row=last + 3, column=1, value="Agotados, Disponibles y los cambios se calculan con fórmulas a partir de las hojas Agotados y Cambios.")
     _widths(rs, [16, 9, 15, 11, 11, 12, 12, 14, 10, 13, 60])
 
     # Fuente Arial en todo el libro (sin pisar estilos de encabezado ni links)

@@ -170,15 +170,18 @@ def test_weekly_history_and_spreadsheet(tmp_dirs, monkeypatch):
     assert sorted(f.name for f in folder.iterdir()) == ["estado_AU.json", "reporte.md", "reporte_stock_2026-11-23_W48.xlsx"]
 
     wb = load_workbook(folder / "reporte_stock_2026-11-23_W48.xlsx")
-    assert wb.sheetnames == ["Resumen", "Cambios", "Inventario AU"]
+    assert wb.sheetnames == ["Resumen", "Cambios", "Agotados AU"]
     rows = [[c.value for c in r] for r in wb["Cambios"].iter_rows(min_row=2)]
     assert ["AU", "Se agotó", "6000009003"] == rows[0][:3] or ["AU", "Se agotó", "6000009003"] == rows[1][:3]
     back = next(r for r in rows if r[1] == "Volvió a tener stock")
     assert back[4].endswith("/6000006005?globallanguage=en&globalmarket=au")
     assert back[5].endswith("/6000006005so?globallanguage=en&globalmarket=au")
-    inv = wb["Inventario AU"]
-    assert inv.max_row == 1 + len(r2.products)
-    assert wb["Resumen"]["E5"].value == '=COUNTIF(\'Inventario AU\'!$C:$C,"Agotado")'
+    inv = wb["Agotados AU"]
+    n_out = sum(v["out"] for v in r2.products.values())
+    assert inv.max_row == 1 + n_out  # solo agotados, sin disponibles
+    assert all(c.value == "Agotado" for c in inv["C"][1:])
+    assert wb["Resumen"]["D5"].value == len(r2.products)
+    assert wb["Resumen"]["E5"].value == '=COUNTIF(\'Agotados AU\'!$C:$C,"Agotado")'
 
 
 def test_first_scan_is_kept_separately(tmp_dirs, monkeypatch):

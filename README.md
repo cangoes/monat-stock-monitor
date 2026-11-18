@@ -59,7 +59,7 @@ Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repo
   - `reporte_stock_<semana>.xlsx`: la hoja de cálculo, con cuatro pestañas:
     - **Resumen:** conteos por mercado (productos, agotados, disponibles, cambios), calculados con fórmulas.
     - **Cambios:** una fila por producto que cambió, con mercado, tipo de cambio, SKU, link nuevo y link anterior.
-    - **Inventario AU** e **Inventario NZ:** el estado completo de esa semana, con filtros. Los agotados van primero.
+    - **Agotados AU** y **Agotados NZ:** solo los productos agotados esa semana, con SKU, nombre y link de mercado, y con filtros. Los productos disponibles no se listan; el estado completo queda en los archivos `estado_*.json`.
   - `reporte.md`: el mismo texto que se envía en el mensaje.
   - `estado_AU.json` y `estado_NZ.json`: copia exacta del estado de esa semana, para compararla con cualquier otra semana.
 
