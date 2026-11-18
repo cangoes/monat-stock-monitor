@@ -500,6 +500,27 @@ def build_asana_html(results: list[MarketResult], history_url: str | None) -> st
     return "".join(out)
 
 
+def find_asana_project(headers: dict, name: str) -> str | None:
+    """Busca un proyecto por nombre (sin distinguir mayúsculas) en todos los espacios de trabajo del usuario."""
+    me = requests.get(f"{ASANA_API}/users/me", headers=headers, params={"opt_fields": "workspaces.gid"}, timeout=30)
+    me.raise_for_status()
+    wanted = name.strip().lower()
+    for ws in me.json()["data"]["workspaces"]:
+        params = {"workspace": ws["gid"], "archived": "false", "opt_fields": "name", "limit": 100}
+        while True:
+            r = requests.get(f"{ASANA_API}/projects", headers=headers, params=params, timeout=30)
+            r.raise_for_status()
+            body = r.json()
+            for proj in body["data"]:
+                if proj.get("name", "").strip().lower() == wanted:
+                    return proj["gid"]
+            nxt = body.get("next_page")
+            if not nxt:
+                break
+            params["offset"] = nxt["offset"]
+    return None
+
+
 def send_asana(token: str, results: list[MarketResult], today: str, history_url: str | None) -> tuple[str, int]:
     """Crea la tarea semanal (asignada al dueño del token, vence hoy) y sus subtareas. Devuelve (url, n_subtareas)."""
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
@@ -508,6 +529,11 @@ def send_asana(token: str, results: list[MarketResult], today: str, history_url:
     name = f"MONAT Stock — {today} (W{d.isocalendar()[1]:02d})" + (f" ⚠️ falló {', '.join(failed)}" if failed else "")
     data = {"name": name, "html_notes": build_asana_html(results, history_url), "assignee": "me", "due_on": today}
     project = os.environ.get("ASANA_PROJECT_GID", "").strip()
+    project_name = os.environ.get("ASANA_PROJECT_NAME", "").strip()
+    if not project and project_name:
+        project = find_asana_project(headers, project_name) or ""
+        if not project:
+            print(f"Aviso: no se encontró el proyecto de Asana '{project_name}'; la tarea va a Mis tareas.", file=sys.stderr)
     if project:
         data["projects"] = [project]
     else:  # sin proyecto: va a "Mis tareas" del primer espacio de trabajo

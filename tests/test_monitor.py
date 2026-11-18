@@ -260,3 +260,26 @@ def test_asana_task_and_subtasks(tmp_dirs, monkeypatch):
     monkeypatch.setenv("ASANA_PROJECT_GID", "P9")
     monitor.send_asana("tok", [r2], "2026-11-23", None)
     assert calls[0][0] == "POST" and calls[0][2]["json"]["data"]["projects"] == ["P9"]
+
+
+def test_asana_project_lookup_by_name(monkeypatch):
+    class R:
+        def __init__(self, data, nxt=None):
+            self._b = {"data": data, "next_page": nxt}
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return self._b
+
+    def fake_get(url, params=None, **kw):
+        if url.endswith("/users/me"):
+            return R({"workspaces": [{"gid": "WS1"}]})
+        if "offset" not in params:
+            return R([{"gid": "1", "name": "Otro"}], {"offset": "abc"})
+        return R([{"gid": "42", "name": "MONAT SHOP STOCK"}])
+
+    monkeypatch.setattr(monitor.requests, "get", fake_get)
+    assert monitor.find_asana_project({}, "monat shop stock") == "42"
+    assert monitor.find_asana_project({}, "No existe") is None
