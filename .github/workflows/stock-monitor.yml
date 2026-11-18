@@ -30,6 +30,7 @@ jobs:
         id: scan
         env:
           MARKETS: AU,NZ
+          GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}

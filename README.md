@@ -41,6 +41,8 @@ Cuando un producto se agota, MONAT a veces publica una versión con el sufijo **
 
 1. Crea un repositorio **privado** en GitHub y sube todo el contenido de esta carpeta, incluida `.github/`.
 2. Configura el canal del mensaje en *Settings → Secrets and variables → Actions → New repository secret*. Usa uno o varios:
+   - **Google Chat** (canal en uso): `GOOGLE_CHAT_WEBHOOK_URL`, el webhook del Space. Para crearlo, en Google Chat abre el Space y entra a *Apps e integraciones → Webhooks → Agregar webhook*, y copia la URL.
+     El reporte llega como un mensaje, o como varios en el mismo hilo si es largo. Al final trae el link a la carpeta de esa semana en `historial/`.
    - **Slack:** `SLACK_WEBHOOK_URL`, un Incoming Webhook del canal.
    - **Teams:** `TEAMS_WEBHOOK_URL`, un webhook del canal.
    - **Correo:** `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_TO` (puedes poner varios separados por coma) y, opcionalmente, `MAIL_FROM`. Con Gmail, usa una *contraseña de aplicación*.

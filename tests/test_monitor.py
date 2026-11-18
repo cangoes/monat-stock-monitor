@@ -177,3 +177,30 @@ def test_first_scan_is_kept_separately(tmp_dirs, monkeypatch):
     monitor.save_history([r2], "segundo reporte", "2026-11-24")
     assert (folder / "reporte.md").read_text() == "segundo reporte"
     assert (first / "reporte.md").read_text() == "primer reporte"
+
+
+def test_google_chat_format_and_split(monkeypatch):
+    report = "# Reporte de stock MONAT — 2026-11-23\n\n## Australia (AU)\n**Se agotaron (1)**\n- Producto X (SKU 1)\n  Link: https://corp.mymonat.com/shop/products/x?globallanguage=en&globalmarket=au\n"
+    text = monitor.to_google_chat(report)
+    assert text.splitlines()[0] == "*📦 Reporte de stock MONAT — 2026-11-23*"
+    assert "*Australia (AU)*" in text and "*Se agotaron (1)*" in text and "**" not in text and "#" not in text
+
+    # Mensaje largo: se parte sin separar un producto de su link
+    long = "\n".join(f"- Producto {i} (SKU {i})\n  Link: https://corp.mymonat.com/shop/products/p-{i}?globallanguage=en&globalmarket=au" for i in range(80))
+    parts = monitor.split_message(long, limit=1000)
+    assert len(parts) > 1 and all(len(p) <= 1000 for p in parts)
+    assert all(not p.startswith("  Link") for p in parts)
+    assert "\n".join(parts) == long
+
+    calls = []
+
+    class R:
+        def raise_for_status(self):
+            pass
+
+    monkeypatch.setattr(monitor.requests, "post", lambda url, **kw: calls.append((url, kw)) or R())
+    n = monitor.send_google_chat("https://chat.googleapis.com/v1/spaces/X/messages?key=k&token=t", report * 40, "https://github.com/x/y/tree/main/historial/w", "2026-11-23")
+    assert n == len(calls) > 1
+    assert all(c[1]["json"]["thread"]["threadKey"] == "monat-stock-2026-11-23" for c in calls)
+    assert all(len(c[1]["json"]["text"]) <= 4096 for c in calls)
+    assert calls[-1][1]["json"]["text"].endswith("📁 Historial de esta semana: https://github.com/x/y/tree/main/historial/w")

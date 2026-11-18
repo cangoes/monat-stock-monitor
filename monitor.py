@@ -389,8 +389,68 @@ def build_report(results: list[MarketResult], today: str) -> str:
 # Envío
 # --------------------------------------------------------------------------------------
 
-def notify(report: str, subject: str) -> list[str]:
+GCHAT_LIMIT = 3800  # Google Chat acepta hasta 4096 caracteres por mensaje; dejamos margen
+
+
+def to_google_chat(report: str) -> str:
+    """Adapta el Markdown del reporte al formato de Google Chat (*negrita*, sin #)."""
+    lines = []
+    for line in report.splitlines():
+        if line.startswith("# "):
+            line = f"*📦 {line[2:].strip()}*"
+        elif line.startswith("## "):
+            line = f"*{line[3:].strip()}*"
+        line = re.sub(r"\*\*(.+?)\*\*", r"*\1*", line)
+        lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def split_message(text: str, limit: int = GCHAT_LIMIT) -> list[str]:
+    """Parte un texto largo en mensajes, sin cortar líneas ni separar un producto de su link."""
+    blocks, current = [], []
+    for line in text.splitlines():
+        if line.startswith("  ") and current:  # línea de link: va pegada al producto anterior
+            current[-1] += "\n" + line
+        else:
+            current.append(line)
+    parts, buf = [], ""
+    for block in current:
+        candidate = f"{buf}\n{block}" if buf else block
+        if len(candidate) > limit and buf:
+            parts.append(buf)
+            buf = block
+        else:
+            buf = candidate
+    if buf:
+        parts.append(buf)
+    return parts
+
+
+def send_google_chat(webhook: str, report: str, history_url: str | None, today: str) -> int:
+    text = to_google_chat(report)
+    if history_url:
+        text += f"\n\n📁 Historial de esta semana: {history_url}"
+    parts = split_message(text)
+    for i, part in enumerate(parts, start=1):
+        if len(parts) > 1:
+            part = f"({i}/{len(parts)})\n{part}"
+        # Todos los mensajes del mismo barrido van en el mismo hilo
+        r = requests.post(
+            webhook,
+            params={"messageReplyOption": "REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD"},
+            json={"text": part, "thread": {"threadKey": f"monat-stock-{today}"}},
+            timeout=30,
+        )
+        r.raise_for_status()
+    return len(parts)
+
+
+def notify(report: str, subject: str, history_url: str | None = None, today: str = "") -> list[str]:
     sent = []
+    gchat = os.environ.get("GOOGLE_CHAT_WEBHOOK_URL")
+    if gchat:
+        n = send_google_chat(gchat, report, history_url, today)
+        sent.append("Google Chat" + (f" ({n} mensajes)" if n > 1 else ""))
     slack = os.environ.get("SLACK_WEBHOOK_URL")
     if slack:
         requests.post(slack, json={"text": report}, timeout=30).raise_for_status()
@@ -466,7 +526,12 @@ def main() -> int:
     failed = [r.code for r in results if r.error or not r.verified]
     subject = f"MONAT stock {today}" + (f" — ⚠️ falló {', '.join(failed)}" if failed else "")
     try:
-        sent = notify(report, subject)
+        history_url = None
+        if os.environ.get("GITHUB_REPOSITORY"):
+            server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
+            branch = os.environ.get("GITHUB_REF_NAME", "main")
+            history_url = f"{server}/{os.environ['GITHUB_REPOSITORY']}/tree/{branch}/{folder.relative_to(ROOT).as_posix()}"
+        sent = notify(report, subject, history_url, today)
         print(f"Enviado por: {', '.join(sent) or 'ningún canal configurado'}")
     except Exception as exc:  # noqa: BLE001
         print(f"Error al enviar el mensaje: {exc}", file=sys.stderr)
