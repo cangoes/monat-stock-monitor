@@ -118,13 +118,24 @@ def test_baseline_then_diff(tmp_dirs, monkeypatch):
     cards[4] = card("6000009003", "Producto 3", 53, disabled=True)
     r2 = run(monkeypatch, {18: cards})
     assert r2.verified and not r2.baseline
-    assert [s for s, _ in r2.back_in] == ["6000006005"]
-    assert [s for s, _ in r2.went_out] == ["6000009003"]
+    assert [x[0] for x in r2.back_in] == ["6000006005"]
+    assert [x[0] for x in r2.went_out] == ["6000009003"]
     assert r2.new_items == [] and r2.removed == []
 
     report = monitor.build_report([r2], "2026-11-23")
     assert "Se agotaron (1)" in report and "Producto 3" in report
     assert "Volvieron a tener stock (1)" in report and "Ceramide Infusion Toner (SKU 6000006005)" in report
+    # Link nuevo (sin SO) con protocolo de mercado, y el link anterior (con SO) para reemplazarlo
+    assert "  Link: https://corp.mymonat.com/shop/products/6000006005?globallanguage=en&globalmarket=au" in report
+    assert "  Link anterior: https://corp.mymonat.com/shop/products/6000006005so?globallanguage=en&globalmarket=au" in report
+    # El producto que se agotó también trae su link
+    assert "  Link: https://corp.mymonat.com/shop/products/6000009003?globallanguage=en&globalmarket=au" in report
+
+
+def test_market_link_format():
+    url = "https://shop.mymonat.com/shop/products/renew-shampoo-6000005514?taxon_id=30"
+    assert monitor.market_link(url, "AU") == "https://corp.mymonat.com/shop/products/renew-shampoo-6000005514?globallanguage=en&globalmarket=au"
+    assert monitor.market_link(url, "NZ") == "https://corp.mymonat.com/shop/products/renew-shampoo-6000005514?globallanguage=en&globalmarket=nz"
 
 
 def test_wrong_market_is_not_reported(tmp_dirs, monkeypatch):

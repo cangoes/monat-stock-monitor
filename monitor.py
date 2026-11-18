@@ -25,6 +25,7 @@ import sys
 from dataclasses import dataclass, field
 from email.mime.text import MIMEText
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -36,6 +37,9 @@ from bs4 import BeautifulSoup
 BASE_URL = os.environ.get("MONAT_BASE_URL", "https://shop.mymonat.com")
 LISTING_PATH = "/shop/t/categories/all-products"
 PAGE_PATH = "/shop/products?sort_scope=&page={page}&taxon={taxon}&infiniteScroll=true"
+# Los links del reporte usan el sitio corp con el protocolo de mercado en la URL, p. ej.:
+#   https://corp.mymonat.com/shop/products/renew-shampoo-6000005514?globallanguage=en&globalmarket=au
+LINK_HOST = os.environ.get("MONAT_LINK_HOST", "https://corp.mymonat.com")
 TAXON_ID = os.environ.get("MONAT_TAXON_ID", "30")  # taxon de "All products"
 MAX_PAGES = 40
 MIN_PRODUCTS = int(os.environ.get("MIN_PRODUCTS", "50"))  # menos que esto = página rota
@@ -50,6 +54,7 @@ MARKETS = {
         "market_id": 18,
         "language_id": 1,
         "flag_alt": "Monat AU",
+        "link_language": "en",
         "ref_price_range": (75, 110),  # rango amplio para tolerar cambios de precio
     },
     "NZ": {
@@ -57,6 +62,7 @@ MARKETS = {
         "market_id": 20,
         "language_id": 1,
         "flag_alt": "Monat NZ",
+        "link_language": "en",
         "ref_price_range": (95, 135),
     },
 }
@@ -112,6 +118,13 @@ class MarketResult:
 
 def base_sku(sku: str) -> str:
     return SO_SUFFIX_RE.sub("", sku.strip())
+
+
+def market_link(url: str, code: str) -> str:
+    """Convierte la URL del listado al formato con protocolo de mercado (globallanguage/globalmarket)."""
+    path = urlparse(url).path
+    lang = MARKETS[code].get("link_language", "en")
+    return f"{LINK_HOST}{path}?globallanguage={lang}&globalmarket={code.lower()}"
 
 
 def clean_name(name: str) -> str:
@@ -280,14 +293,14 @@ def diff(prev: dict, curr: dict) -> tuple[list, list, list, list]:
     for sku, item in curr.items():
         old = prev.get(sku)
         if old is None:
-            new_items.append((sku, item))
+            new_items.append((sku, item, None))
         elif not old["out"] and item["out"]:
-            went_out.append((sku, item))
+            went_out.append((sku, item, old))
         elif old["out"] and not item["out"]:
-            back_in.append((sku, item))
+            back_in.append((sku, item, old))
     for sku, item in prev.items():
         if sku not in curr:
-            removed.append((sku, item))
+            removed.append((sku, item, None))
     key = lambda x: x[1]["name"].lower()
     return sorted(went_out, key=key), sorted(back_in, key=key), sorted(new_items, key=key), sorted(removed, key=key)
 
@@ -318,8 +331,17 @@ def run_market(code: str, cfg: dict, when: str) -> MarketResult:
 # Reporte
 # --------------------------------------------------------------------------------------
 
-def _line(sku: str, item: dict) -> str:
-    return f"- {item['name']} (SKU {sku})"
+def _line(code: str, sku: str, item: dict, old: dict | None = None, suffix: str = "") -> str:
+    """Una línea del reporte con el link en formato de mercado; si el link cambió, muestra también el anterior."""
+    lines = [f"- {item['name']} (SKU {sku}){suffix}"]
+    if item.get("url"):
+        new_link = market_link(item["url"], code)
+        lines.append(f"  Link: {new_link}")
+        if old and old.get("url"):
+            old_link = market_link(old["url"], code)
+            if old_link != new_link:
+                lines.append(f"  Link anterior: {old_link}")
+    return "\n".join(lines)
 
 
 def build_report(results: list[MarketResult], today: str) -> str:
@@ -342,22 +364,22 @@ def build_report(results: list[MarketResult], today: str) -> str:
         out.append("")
         if r.baseline:
             out.append("Primer barrido: se guardó como punto de partida. Productos agotados hoy:")
-            out += [_line(k, v) for k, v in sorted(r.products.items(), key=lambda x: x[1]["name"].lower()) if v["out"]]
+            out += [_line(r.code, k, v) for k, v in sorted(r.products.items(), key=lambda x: x[1]["name"].lower()) if v["out"]]
             out.append("")
             continue
         out.append(f"**Se agotaron ({len(r.went_out)})**")
-        out += [_line(k, v) for k, v in r.went_out] or ["- Ninguno"]
+        out += [_line(r.code, k, v, o) for k, v, o in r.went_out] or ["- Ninguno"]
         out.append("")
         out.append(f"**Volvieron a tener stock ({len(r.back_in)})**")
-        out += [_line(k, v) for k, v in r.back_in] or ["- Ninguno"]
+        out += [_line(r.code, k, v, o) for k, v, o in r.back_in] or ["- Ninguno"]
         out.append("")
         if r.new_items:
             out.append(f"Productos nuevos en el listado ({len(r.new_items)}):")
-            out += [_line(k, v) + (" — agotado" if v["out"] else "") for k, v in r.new_items]
+            out += [_line(r.code, k, v, suffix=" — agotado" if v["out"] else "") for k, v, _ in r.new_items]
             out.append("")
         if r.removed:
             out.append(f"Productos que ya no aparecen ({len(r.removed)}):")
-            out += [_line(k, v) for k, v in r.removed]
+            out += [_line(r.code, k, v) for k, v, _ in r.removed]
             out.append("")
     return "\n".join(out).rstrip() + "\n"
 

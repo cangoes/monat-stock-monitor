@@ -7,6 +7,16 @@ Cada lunes a las 7:00 a. m. (hora de Bogotá) revisa todos los productos de
 - los productos que **volvieron a tener stock**;
 - los productos nuevos o que dejaron de aparecer en el listado, si los hay.
 
+Cada producto trae su link en el formato con protocolo de mercado, listo para pegar en el array del mercado:
+
+```
+- Barrier Booster™ Ceramide Infusion Toner (SKU 6000006005)
+  Link: https://corp.mymonat.com/shop/products/barrier-booster-ceramide-infusion-toner-6000006005?globallanguage=en&globalmarket=au
+  Link anterior: https://corp.mymonat.com/shop/products/barrier-booster-ceramide-infusion-toner-6000006005so?globallanguage=en&globalmarket=au
+```
+
+El link cambia cuando un producto pasa a su versión "SO" (agotado) o vuelve a la versión normal. Si el link es distinto al de la semana anterior, el reporte muestra también el **Link anterior**, para buscarlo y reemplazarlo en el array. El idioma (`globallanguage`) se configura por mercado en `link_language`, dentro de `MARKETS`.
+
 ## Cómo comprueba que está en el mercado correcto
 
 El sitio usa la misma URL para todos los mercados. Por eso, en cada mercado el script abre una sesión nueva, selecciona el país con `change_site_market` (AU = `market_id 18`, NZ = `market_id 20`) y verifica:
