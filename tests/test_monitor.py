@@ -156,32 +156,12 @@ def test_nz_price_check(tmp_dirs, monkeypatch):
     assert r.checks["bandera del encabezado"][0] is True
 
 
-def test_weekly_history_and_spreadsheet(tmp_dirs, monkeypatch):
-    from openpyxl import load_workbook
-
+def test_weekly_history(tmp_dirs, monkeypatch):
     run(monkeypatch, {18: catalog_au()})
-    cards = catalog_au(oos_toner=False)
-    cards[4] = card("6000009003", "Producto 3", 53, disabled=True)
-    r2 = run(monkeypatch, {18: cards})
-    report = monitor.build_report([r2], "2026-11-23")
-    folder = monitor.save_history([r2], report, "2026-11-25")  # miércoles -> carpeta del lunes de esa semana
-
+    r2 = run(monkeypatch, {18: catalog_au(oos_toner=False)})
+    folder = monitor.save_history([r2], "reporte", "2026-11-25")  # miércoles -> carpeta del lunes de esa semana
     assert folder.name == "2026-11-23_W48"
-    assert sorted(f.name for f in folder.iterdir()) == ["estado_AU.json", "reporte.md", "reporte_stock_2026-11-23_W48.xlsx"]
-
-    wb = load_workbook(folder / "reporte_stock_2026-11-23_W48.xlsx")
-    assert wb.sheetnames == ["Resumen", "Cambios", "Agotados AU"]
-    rows = [[c.value for c in r] for r in wb["Cambios"].iter_rows(min_row=2)]
-    assert ["AU", "Se agotó", "6000009003"] == rows[0][:3] or ["AU", "Se agotó", "6000009003"] == rows[1][:3]
-    back = next(r for r in rows if r[1] == "Volvió a tener stock")
-    assert back[4].endswith("/6000006005?globallanguage=en&globalmarket=au")
-    assert back[5].endswith("/6000006005so?globallanguage=en&globalmarket=au")
-    inv = wb["Agotados AU"]
-    n_out = sum(v["out"] for v in r2.products.values())
-    assert inv.max_row == 1 + n_out  # solo agotados, sin disponibles
-    assert all(c.value == "Agotado" for c in inv["C"][1:])
-    assert wb["Resumen"]["D5"].value == len(r2.products)
-    assert wb["Resumen"]["E5"].value == '=COUNTIF(\'Agotados AU\'!$C:$C,"Agotado")'
+    assert sorted(f.name for f in folder.iterdir()) == ["estado_AU.json", "reporte.md"]
 
 
 def test_first_scan_is_kept_separately(tmp_dirs, monkeypatch):
@@ -189,7 +169,7 @@ def test_first_scan_is_kept_separately(tmp_dirs, monkeypatch):
     folder = monitor.save_history([r1], "primer reporte", "2026-11-23")
     first = folder / "primer-barrido"
     assert (first / "reporte.md").read_text() == "primer reporte"
-    assert (first / "reporte_stock_primer-barrido_2026-11-23.xlsx").exists()
+    assert not list(first.glob("*.xlsx"))
     assert (first / "estado_AU.json").exists()
 
     # Otra ejecución la misma semana sobrescribe la carpeta semanal, pero no el primer barrido

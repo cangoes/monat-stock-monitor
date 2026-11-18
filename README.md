@@ -56,16 +56,12 @@ Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repo
 - `monitor.py`: el barrido, la verificación, la comparación y el envío.
 - `state/AU.json`, `state/NZ.json`: el último estado conocido. Los genera y actualiza el workflow.
 - `historial/`: una carpeta por semana, con el nombre del lunes y el número de semana ISO (ej. `2026-11-23_W48/`). Cada carpeta tiene:
-  - `reporte_stock_<semana>.xlsx`: la hoja de cálculo, con cuatro pestañas:
-    - **Resumen:** conteos por mercado (productos, agotados, disponibles, cambios), calculados con fórmulas.
-    - **Cambios:** una fila por producto que cambió, con mercado, tipo de cambio, SKU, link nuevo y link anterior.
-    - **Agotados AU** y **Agotados NZ:** solo los productos agotados esa semana, con SKU, nombre y link de mercado, y con filtros. Los productos disponibles no se listan; el estado completo queda en los archivos `estado_*.json`.
   - `reporte.md`: el mismo texto que se envía en el mensaje.
   - `estado_AU.json` y `estado_NZ.json`: copia exacta del estado de esa semana, para compararla con cualquier otra semana.
 
   Si el workflow se ejecuta más de una vez en la misma semana, la carpeta de esa semana se sobrescribe con el último barrido.
 
-  El **primer barrido** (el punto de partida de cada mercado) se guarda aparte, en la subcarpeta `primer-barrido/` de su semana, y nunca se sobrescribe. El del 18-nov-2026 está en `historial/2026-11-16_W47/primer-barrido/`, con su reporte original, la hoja de cálculo y el estado de ese momento.
+  El **primer barrido** (el punto de partida de cada mercado) se guarda aparte, en la subcarpeta `primer-barrido/` de su semana, y nunca se sobrescribe. El del 18-nov-2026 está en `historial/2026-11-16_W47/primer-barrido/`, con su reporte original y el estado de ese momento.
 - `tests/`: pruebas sin conexión (`pip install pytest && pytest`).
 
 Para agregar más mercados, añade una entrada en `MARKETS` dentro de `monitor.py`, con su `market_id`, el texto de la bandera y el rango de precio. Luego inclúyelo en la variable `MARKETS` del workflow.

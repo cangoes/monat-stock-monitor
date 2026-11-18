@@ -8,7 +8,7 @@ Flujo por mercado:
   3. Recorre todas las páginas del listado "All products" y lee el estado de cada producto.
   4. Compara con el barrido anterior (state/<MERCADO>.json) por SKU base (sin sufijo "SO").
   5. Genera un reporte con los productos que se agotaron y los que volvieron a tener stock,
-     lo guarda en historial/<fecha>_W<semana>/ (Markdown + Excel + copia del estado)
+     lo guarda en historial/<fecha>_W<semana>/ (reporte en Markdown + copia del estado)
      y lo envía por los canales configurados.
 
 Si la verificación de un mercado falla, ese mercado NO se compara ni se actualiza su estado,
@@ -27,10 +27,6 @@ from dataclasses import dataclass, field
 from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urlparse
-
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Font, PatternFill
-from openpyxl.utils import get_column_letter
 
 import requests
 from bs4 import BeautifulSoup
@@ -423,21 +419,8 @@ def notify(report: str, subject: str) -> list[str]:
 
 
 # --------------------------------------------------------------------------------------
-# Historial semanal y hoja de cálculo
+# Historial semanal
 # --------------------------------------------------------------------------------------
-
-FONT = "Arial"
-HEADER_FILL = PatternFill("solid", start_color="1F3A5F")
-OUT_FILL = PatternFill("solid", start_color="FCE4E4")
-BACK_FILL = PatternFill("solid", start_color="E3F4E8")
-
-CHANGE_LABELS = {
-    "went_out": "Se agotó",
-    "back_in": "Volvió a tener stock",
-    "new_items": "Nuevo en el listado",
-    "removed": "Ya no aparece",
-}
-
 
 def week_folder(today: str) -> Path:
     """historial/AAAA-MM-DD_Wnn — una carpeta por semana (si se repite en la semana, se sobrescribe)."""
@@ -447,142 +430,20 @@ def week_folder(today: str) -> Path:
     return HISTORY_DIR / f"{monday.isoformat()}_W{week:02d}"
 
 
-def _header(ws, row: int, labels: list[str]) -> None:
-    for col, label in enumerate(labels, start=1):
-        c = ws.cell(row=row, column=col, value=label)
-        c.font = Font(name=FONT, bold=True, color="FFFFFF")
-        c.fill = HEADER_FILL
-        c.alignment = Alignment(vertical="center", wrap_text=True)
-
-
-def _widths(ws, widths: list[int]) -> None:
-    for i, w in enumerate(widths, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = w
-
-
-def _link_cell(cell, url: str | None) -> None:
-    if url:
-        cell.value = url
-        cell.hyperlink = url
-        cell.font = Font(name=FONT, color="0563C1", underline="single")
-
-
-def build_workbook(results: list[MarketResult], today: str, path: Path) -> None:
-    wb = Workbook()
-    d = dt.date.fromisoformat(today)
-
-    # --- Cambios: una fila por producto que cambió, de todos los mercados ---
-    ch = wb.active
-    ch.title = "Cambios"
-    _header(ch, 1, ["Mercado", "Cambio", "SKU", "Producto", "Link nuevo", "Link anterior"])
-    row = 2
-    for r in results:
-        if r.error or not r.verified:
-            continue
-        for key in ("went_out", "back_in", "new_items", "removed"):
-            for sku, item, old in getattr(r, key):
-                ch.cell(row=row, column=1, value=r.code)
-                c = ch.cell(row=row, column=2, value=CHANGE_LABELS[key])
-                if key == "went_out":
-                    c.fill = OUT_FILL
-                elif key == "back_in":
-                    c.fill = BACK_FILL
-                ch.cell(row=row, column=3, value=sku)
-                ch.cell(row=row, column=4, value=item["name"])
-                new_link = market_link(item["url"], r.code) if item.get("url") else None
-                old_link = market_link(old["url"], r.code) if old and old.get("url") else None
-                _link_cell(ch.cell(row=row, column=5), new_link)
-                if old_link and old_link != new_link:
-                    _link_cell(ch.cell(row=row, column=6), old_link)
-                row += 1
-    if row == 2:
-        baseline = any(r.baseline for r in results)
-        ch.cell(row=2, column=1, value="Primer barrido: sin semana anterior para comparar." if baseline
-                else "Sin cambios de stock esta semana.")
-    _widths(ch, [10, 22, 14, 55, 90, 90])
-
-    # --- Agotados por mercado: solo los productos sin stock esta semana ---
-    # (el estado completo, con los disponibles, queda en estado_<MERCADO>.json)
-    for r in results:
-        ws = wb.create_sheet(f"Agotados {r.code}")
-        _header(ws, 1, ["SKU", "Producto", "Estado", "SKUs en el sitio", "Link"])
-        items = sorted(((k, v) for k, v in r.products.items() if v["out"]), key=lambda x: x[1]["name"].lower())
-        for i, (sku, item) in enumerate(items, start=2):
-            ws.cell(row=i, column=1, value=sku)
-            ws.cell(row=i, column=2, value=item["name"])
-            ws.cell(row=i, column=3, value="Agotado").fill = OUT_FILL
-            ws.cell(row=i, column=4, value=", ".join(item.get("skus", [])))
-            _link_cell(ws.cell(row=i, column=5), market_link(item["url"], r.code) if item.get("url") else None)
-        if not items:
-            ws.cell(row=2, column=2, value="Sin productos agotados." if r.verified and not r.error
-                    else "Sin datos: el barrido de este mercado no se completó o no se verificó (ver Resumen).")
-        ws.freeze_panes = "A2"
-        ws.auto_filter.ref = f"A1:E{max(len(items) + 1, 1)}"
-        _widths(ws, [14, 60, 13, 28, 95])
-
-    # --- Resumen: conteos con fórmulas sobre las otras hojas ---
-    rs = wb.create_sheet("Resumen", 0)
-    rs["A1"] = "Reporte semanal de stock MONAT"
-    rs["A1"].font = Font(name=FONT, bold=True, size=14)
-    rs["A2"] = f"Barrido del {today} · semana ISO {d.isocalendar()[1]} de {d.isocalendar()[0]}"
-    cols = ["Mercado", "Código", "Verificación", "Productos", "Agotados", "Disponibles",
-            "Se agotaron", "Volvieron a tener stock", "Nuevos", "Ya no aparecen", "Notas"]
-    _header(rs, 4, cols)
-    for i, r in enumerate(results, start=5):
-        inv = f"'Agotados {r.code}'"
-        rs.cell(row=i, column=1, value=MARKETS[r.code]["name"])
-        rs.cell(row=i, column=2, value=r.code)
-        if r.error:
-            status, note = "Error", r.error
-        elif not r.verified:
-            status = "No verificado"
-            note = "; ".join(f"{n}: {d_}" for n, (ok, d_) in r.checks.items() if not ok)
-        else:
-            status = "Verificado"
-            note = "Primer barrido (punto de partida)" if r.baseline else ""
-        rs.cell(row=i, column=3, value=status).fill = BACK_FILL if status == "Verificado" else OUT_FILL
-        ok = r.verified and not r.error
-        total = rs.cell(row=i, column=4, value=len(r.products) if ok else None)
-        total.font = Font(name=FONT, color="0000FF")  # dato del barrido (no es fórmula)
-        rs.cell(row=i, column=5, value=f'=COUNTIF({inv}!$C:$C,"Agotado")')
-        rs.cell(row=i, column=6, value=f"=IF(D{i}=\"\",\"\",D{i}-E{i})")
-        for col, key in zip(range(7, 11), ("went_out", "back_in", "new_items", "removed")):
-            rs.cell(row=i, column=col, value=f'=COUNTIFS(Cambios!$A:$A,$B{i},Cambios!$B:$B,"{CHANGE_LABELS[key]}")')
-        rs.cell(row=i, column=11, value=note)
-        for col in range(4, 11):
-            rs.cell(row=i, column=col).number_format = "#,##0"
-    last = 4 + len(results)
-    rs.cell(row=last + 2, column=1, value="Productos (en azul): total de productos leídos en el listado de ese mercado durante el barrido.")
-    rs.cell(row=last + 3, column=1, value="Agotados, Disponibles y los cambios se calculan con fórmulas a partir de las hojas Agotados y Cambios.")
-    _widths(rs, [16, 9, 15, 11, 11, 12, 12, 14, 10, 13, 60])
-
-    # Fuente Arial en todo el libro (sin pisar estilos de encabezado ni links)
-    for ws in wb.worksheets:
-        for row_cells in ws.iter_rows():
-            for c in row_cells:
-                if c.font.name != FONT:
-                    c.font = Font(name=FONT, bold=c.font.bold, color=c.font.color,
-                                  underline=c.font.underline, size=c.font.size)
-    wb.calculation.fullCalcOnLoad = True  # Excel/Sheets recalculan al abrir
-    path.parent.mkdir(parents=True, exist_ok=True)
-    wb.save(path)
-
-
 def save_history(results: list[MarketResult], report: str, today: str) -> Path:
     folder = week_folder(today)
     # El primer barrido (punto de partida) se guarda aparte y nunca se sobrescribe,
     # aunque el workflow se vuelva a ejecutar esa misma semana.
     first = folder / "primer-barrido"
     if any(r.baseline for r in results) and not first.exists():
-        _write_history(first, [r for r in results if r.baseline], report, today, f"primer-barrido_{today}")
-    _write_history(folder, results, report, today, folder.name)
+        _write_history(first, [r for r in results if r.baseline], report, today)
+    _write_history(folder, results, report, today)
     return folder
 
 
-def _write_history(folder: Path, results: list[MarketResult], report: str, today: str, tag: str) -> None:
+def _write_history(folder: Path, results: list[MarketResult], report: str, today: str) -> None:
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "reporte.md").write_text(report, encoding="utf-8")
-    build_workbook(results, today, folder / f"reporte_stock_{tag}.xlsx")
     for r in results:  # copia del estado de esa semana, solo de mercados verificados
         if r.verified and not r.error:
             (folder / f"estado_{r.code}.json").write_text(
