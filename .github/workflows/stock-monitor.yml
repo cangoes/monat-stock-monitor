@@ -6,7 +6,7 @@ on:
   workflow_dispatch: {}     # permite ejecutarlo a mano desde la pestaña Actions
 
 permissions:
-  contents: write           # para guardar state/ y reports/ en el repositorio
+  contents: write           # para guardar state/ e historial/ en el repositorio
 
 concurrency:
   group: stock-monitor
@@ -45,7 +45,7 @@ jobs:
         run: |
           git config user.name "stock-monitor-bot"
           git config user.email "stock-monitor-bot@users.noreply.github.com"
-          git add state reports || true
+          git add state historial || true
           if git diff --cached --quiet; then
             echo "Sin cambios que guardar"
           else

@@ -46,7 +46,7 @@ Cuando un producto se agota, MONAT a veces publica una versión con el sufijo **
    - **Correo:** `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_TO` (puedes poner varios separados por coma) y, opcionalmente, `MAIL_FROM`. Con Gmail, usa una *contraseña de aplicación*.
 3. Ve a *Actions → MONAT stock monitor → Run workflow* para hacer la **primera ejecución de prueba**.
    - La primera vez guarda el punto de partida y lista los productos agotados de hoy.
-   - El reporte aparece en el resumen de la ejecución y en `reports/AAAA-MM-DD.md`.
+   - El reporte aparece en el resumen de la ejecución y en la carpeta de la semana dentro de `historial/`.
 4. Si sale en verde con "Mercado verificado ✅" en AU y NZ, ya está listo. Desde ahí corre solo cada lunes.
 
 Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repositorio).
@@ -55,7 +55,15 @@ Si una ejecución falla, GitHub te avisa por correo (a la cuenta dueña del repo
 
 - `monitor.py`: el barrido, la verificación, la comparación y el envío.
 - `state/AU.json`, `state/NZ.json`: el último estado conocido. Los genera y actualiza el workflow.
-- `reports/`: un reporte por semana, para tener historial.
+- `historial/`: una carpeta por semana, con el nombre del lunes y el número de semana ISO (ej. `2026-11-23_W48/`). Cada carpeta tiene:
+  - `reporte_stock_<semana>.xlsx`: la hoja de cálculo, con cuatro pestañas:
+    - **Resumen:** conteos por mercado (productos, agotados, disponibles, cambios), calculados con fórmulas.
+    - **Cambios:** una fila por producto que cambió, con mercado, tipo de cambio, SKU, link nuevo y link anterior.
+    - **Inventario AU** e **Inventario NZ:** el estado completo de esa semana, con filtros. Los agotados van primero.
+  - `reporte.md`: el mismo texto que se envía en el mensaje.
+  - `estado_AU.json` y `estado_NZ.json`: copia exacta del estado de esa semana, para compararla con cualquier otra semana.
+
+  Si el workflow se ejecuta más de una vez en la misma semana, la carpeta de esa semana se sobrescribe con el último barrido.
 - `tests/`: pruebas sin conexión (`pip install pytest && pytest`).
 
 Para agregar más mercados, añade una entrada en `MARKETS` dentro de `monitor.py`, con su `market_id`, el texto de la bandera y el rango de precio. Luego inclúyelo en la variable `MARKETS` del workflow.
