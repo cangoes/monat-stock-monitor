@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from email.mime.text import MIMEText
 from pathlib import Path
 from urllib.parse import urlparse
+from xml.sax.saxutils import escape, quoteattr
 
 import requests
 from bs4 import BeautifulSoup
@@ -445,8 +446,104 @@ def send_google_chat(webhook: str, report: str, history_url: str | None, today: 
     return len(parts)
 
 
-def notify(report: str, subject: str, history_url: str | None = None, today: str = "") -> list[str]:
+# --------------------------------------------------------------------------------------
+# Asana: una tarea por barrido (y una subtarea por producto que cambió)
+# --------------------------------------------------------------------------------------
+
+ASANA_API = "https://app.asana.com/api/1.0"
+ASANA_SUBTASK_KINDS = {"went_out": "Se agotó", "back_in": "Volvió a tener stock"}
+
+
+def _a(url: str, label: str | None = None) -> str:
+    return f"<a href={quoteattr(url)}>{escape(label or url)}</a>"
+
+
+def _asana_item(code: str, sku: str, item: dict, old: dict | None) -> str:
+    parts = [f"{escape(item['name'])} (SKU {escape(sku)})"]
+    if item.get("url"):
+        new_link = market_link(item["url"], code)
+        parts.append(f"Link: {_a(new_link)}")
+        if old and old.get("url") and market_link(old["url"], code) != new_link:
+            parts.append(f"Link anterior: {_a(market_link(old['url'], code))}")
+    return "<li>" + "\n".join(parts) + "</li>"
+
+
+def build_asana_html(results: list[MarketResult], history_url: str | None) -> str:
+    """Descripción de la tarea en el HTML que acepta Asana (XML válido, etiquetas básicas)."""
+    out = ["<body>"]
+    for r in results:
+        out.append(f"<h2>{escape(MARKETS[r.code]['name'])} ({r.code})</h2>")
+        if r.error:
+            out.append(f"⚠️ No se pudo completar el barrido: {escape(r.error)}\n")
+            continue
+        if not r.verified:
+            fails = "".join(f"<li>{escape(n)}: {escape(d)}</li>" for n, (ok, d) in r.checks.items() if not ok)
+            out.append(f"⚠️ No se pudo confirmar el mercado. No se compararon datos.<ul>{fails}</ul>")
+            continue
+        n_out = sum(1 for v in r.products.values() if v["out"])
+        out.append(f"Mercado verificado ✅ · {len(r.products)} productos · {n_out} agotados\n")
+        if r.baseline:
+            items = sorted(((k, v) for k, v in r.products.items() if v["out"]), key=lambda x: x[1]["name"].lower())
+            out.append("<strong>Primer barrido: productos agotados hoy</strong>")
+            out.append("<ul>" + "".join(_asana_item(r.code, k, v, None) for k, v in items) + "</ul>")
+            continue
+        for key, title in (("went_out", "Se agotaron"), ("back_in", "Volvieron a tener stock"),
+                           ("new_items", "Nuevos en el listado"), ("removed", "Ya no aparecen")):
+            rows = getattr(r, key)
+            if not rows and key in ("new_items", "removed"):
+                continue
+            out.append(f"<strong>{title} ({len(rows)})</strong>")
+            out.append("<ul>" + ("".join(_asana_item(r.code, k, v, o) for k, v, o in rows) or "<li>Ninguno</li>") + "</ul>")
+    if history_url:
+        out.append(f"📁 Historial de esta semana: {_a(history_url)}")
+    out.append("</body>")
+    return "".join(out)
+
+
+def send_asana(token: str, results: list[MarketResult], today: str, history_url: str | None) -> tuple[str, int]:
+    """Crea la tarea semanal (asignada al dueño del token, vence hoy) y sus subtareas. Devuelve (url, n_subtareas)."""
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    d = dt.date.fromisoformat(today)
+    failed = [r.code for r in results if r.error or not r.verified]
+    name = f"MONAT Stock — {today} (W{d.isocalendar()[1]:02d})" + (f" ⚠️ falló {', '.join(failed)}" if failed else "")
+    data = {"name": name, "html_notes": build_asana_html(results, history_url), "assignee": "me", "due_on": today}
+    project = os.environ.get("ASANA_PROJECT_GID", "").strip()
+    if project:
+        data["projects"] = [project]
+    else:  # sin proyecto: va a "Mis tareas" del primer espacio de trabajo
+        me = requests.get(f"{ASANA_API}/users/me", headers=headers, params={"opt_fields": "workspaces.gid"}, timeout=30)
+        me.raise_for_status()
+        data["workspace"] = me.json()["data"]["workspaces"][0]["gid"]
+    r = requests.post(f"{ASANA_API}/tasks", headers=headers, json={"data": data},
+                      params={"opt_fields": "gid,permalink_url"}, timeout=30)
+    r.raise_for_status()
+    task = r.json()["data"]
+
+    # Una subtarea por producto que se agotó o volvió: se marca como completada al actualizar el array
+    n = 0
+    for res in results:
+        if res.error or not res.verified or res.baseline:
+            continue
+        for key, label in ASANA_SUBTASK_KINDS.items():
+            for sku, item, old in getattr(res, key):
+                body = "<body><ul>" + _asana_item(res.code, sku, item, old) + "</ul></body>"
+                st = requests.post(
+                    f"{ASANA_API}/tasks/{task['gid']}/subtasks", headers=headers, timeout=30,
+                    json={"data": {"name": f"{res.code} · {label} · {item['name']}", "html_notes": body,
+                                   "assignee": "me", "due_on": today}},
+                )
+                st.raise_for_status()
+                n += 1
+    return task.get("permalink_url", task["gid"]), n
+
+
+def notify(report: str, subject: str, history_url: str | None = None, today: str = "",
+           results: list[MarketResult] | None = None) -> list[str]:
     sent = []
+    asana = os.environ.get("ASANA_TOKEN")
+    if asana and results is not None:
+        url, n = send_asana(asana, results, today, history_url)
+        sent.append(f"Asana ({url}" + (f", {n} subtareas)" if n else ")"))
     gchat = os.environ.get("GOOGLE_CHAT_WEBHOOK_URL")
     if gchat:
         n = send_google_chat(gchat, report, history_url, today)
@@ -531,7 +628,7 @@ def main() -> int:
             server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
             branch = os.environ.get("GITHUB_REF_NAME", "main")
             history_url = f"{server}/{os.environ['GITHUB_REPOSITORY']}/tree/{branch}/{folder.relative_to(ROOT).as_posix()}"
-        sent = notify(report, subject, history_url, today)
+        sent = notify(report, subject, history_url, today, results)
         print(f"Enviado por: {', '.join(sent) or 'ningún canal configurado'}")
     except Exception as exc:  # noqa: BLE001
         print(f"Error al enviar el mensaje: {exc}", file=sys.stderr)

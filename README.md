@@ -41,7 +41,11 @@ Cuando un producto se agota, MONAT a veces publica una versión con el sufijo **
 
 1. Crea un repositorio **privado** en GitHub y sube todo el contenido de esta carpeta, incluida `.github/`.
 2. Configura el canal del mensaje en *Settings → Secrets and variables → Actions → New repository secret*. Usa uno o varios:
-   - **Google Chat** (canal en uso): `GOOGLE_CHAT_WEBHOOK_URL`, el webhook del Space. Para crearlo, en Google Chat abre el Space y entra a *Apps e integraciones → Webhooks → Agregar webhook*, y copia la URL.
+   - **Asana** (canal en uso): secreto `ASANA_TOKEN` con un *Personal Access Token*. Se crea en https://app.asana.com/0/my-apps → *Create new token*. Pégalo directo en GitHub, nunca en un chat ni en un correo.
+     Cada barrido crea una tarea "MONAT Stock — AAAA-MM-DD (Wnn)", asignada a ti y con vencimiento ese día. La descripción trae el reporte con links, y hay una **subtarea por cada producto que se agotó o volvió a tener stock**, para marcarla al actualizar el array de ese mercado.
+     Sin más configuración, la tarea va a *Mis tareas*. Para enviarla a un proyecto, crea en *Settings → Secrets and variables → Actions → Variables* la variable `ASANA_PROJECT_GID` con el número largo que aparece en el link del proyecto.
+     Como el token actúa en nombre de tu propia cuenta, Asana puede no enviarte una notificación por una tarea que "tú mismo" creaste; la tarea igual aparece en *Mis tareas* con su fecha.
+   - **Google Chat** (solo cuentas de Google Workspace): `GOOGLE_CHAT_WEBHOOK_URL`, el webhook del Space. Para crearlo, en Google Chat abre el Space y entra a *Apps e integraciones → Webhooks → Agregar webhook*, y copia la URL.
      El reporte llega como un mensaje, o como varios en el mismo hilo si es largo. Al final trae el link a la carpeta de esa semana en `historial/`.
    - **Slack:** `SLACK_WEBHOOK_URL`, un Incoming Webhook del canal.
    - **Teams:** `TEAMS_WEBHOOK_URL`, un webhook del canal.
