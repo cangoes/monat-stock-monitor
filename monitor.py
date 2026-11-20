@@ -499,11 +499,10 @@ def send_google_chat(webhook: str, report: str, history_url: str | None, today: 
 
 
 # --------------------------------------------------------------------------------------
-# Asana: una tarea por barrido (y una subtarea por producto que cambió)
+# Asana: una tarea por región por barrido, con el reporte en la descripción (sin subtareas)
 # --------------------------------------------------------------------------------------
 
 ASANA_API = "https://app.asana.com/api/1.0"
-ASANA_SUBTASK_KINDS = {"went_out": "Se agotó", "back_in": "Volvió a tener stock"}
 
 
 def _a(url: str, label: str | None = None) -> str:
@@ -584,8 +583,9 @@ def find_asana_project(headers: dict, name: str) -> str | None:
 
 
 def send_asana(token: str, results: list[MarketResult], today: str, history_url: str | None,
-               region: str | None = None) -> tuple[str, int]:
-    """Crea la tarea semanal (asignada al dueño del token, vence hoy) y sus subtareas. Devuelve (url, n_subtareas)."""
+               region: str | None = None) -> str:
+    """Crea la tarea semanal de la región (asignada al dueño del token, vence hoy) con el reporte
+    en la descripción. No crea subtareas. Devuelve el link de la tarea."""
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     d = dt.date.fromisoformat(today)
     failed = [r.code for r in results if r.error or not r.verified]
@@ -611,23 +611,7 @@ def send_asana(token: str, results: list[MarketResult], today: str, history_url:
                       params={"opt_fields": "gid,permalink_url"}, timeout=30)
     r.raise_for_status()
     task = r.json()["data"]
-
-    # Una subtarea por producto que se agotó o volvió: se marca como completada al actualizar el array
-    n = 0
-    for res in results:
-        if res.error or not res.verified or res.baseline:
-            continue
-        for key, label in ASANA_SUBTASK_KINDS.items():
-            for sku, item, old in getattr(res, key):
-                body = "<body><ul>" + _asana_item(res.code, sku, item, old) + "</ul></body>"
-                st = requests.post(
-                    f"{ASANA_API}/tasks/{task['gid']}/subtasks", headers=headers, timeout=30,
-                    json={"data": {"name": f"{res.code} · {label} · {item['name']}", "html_notes": body,
-                                   "assignee": "me", "due_on": today}},
-                )
-                st.raise_for_status()
-                n += 1
-    return task.get("permalink_url", task["gid"]), n
+    return task.get("permalink_url", task["gid"])
 
 
 def notify(report: str, subject: str, history_url: str | None = None, today: str = "",
@@ -635,8 +619,8 @@ def notify(report: str, subject: str, history_url: str | None = None, today: str
     sent = []
     asana = os.environ.get("ASANA_TOKEN")
     if asana and results is not None:
-        url, n = send_asana(asana, results, today, history_url, region)
-        sent.append(f"Asana ({url}" + (f", {n} subtareas)" if n else ")"))
+        url = send_asana(asana, results, today, history_url, region)
+        sent.append(f"Asana ({url})")
     gchat = os.environ.get("GOOGLE_CHAT_WEBHOOK_URL")
     if gchat:
         n = send_google_chat(gchat, report, history_url, today, region or "")

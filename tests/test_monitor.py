@@ -205,7 +205,7 @@ def test_google_chat_format_and_split(monkeypatch):
     assert calls[-1][1]["json"]["text"].endswith("📁 Historial de esta semana: https://github.com/x/y/tree/main/historial/w")
 
 
-def test_asana_task_and_subtasks(tmp_dirs, monkeypatch):
+def test_asana_task_without_subtasks(tmp_dirs, monkeypatch):
     import xml.etree.ElementTree as ET
 
     run(monkeypatch, {18: catalog_au()})
@@ -237,8 +237,8 @@ def test_asana_task_and_subtasks(tmp_dirs, monkeypatch):
     monkeypatch.setattr(monitor.requests, "post", fake_post)
     monkeypatch.delenv("ASANA_PROJECT_GID", raising=False)
 
-    url, n = monitor.send_asana("tok", [r2], "2026-11-23", "https://github.com/x/y/tree/main/historial/w", "APAC")
-    assert url == "https://app.asana.com/0/0/T1" and n == 2
+    url = monitor.send_asana("tok", [r2], "2026-11-23", "https://github.com/x/y/tree/main/historial/w", "APAC")
+    assert url == "https://app.asana.com/0/0/T1"
 
     task = calls[1][2]["json"]["data"]
     assert task["name"] == "MONAT Stock APAC — 2026-11-23 (W48)"
@@ -248,11 +248,10 @@ def test_asana_task_and_subtasks(tmp_dirs, monkeypatch):
     assert "https://corp.mymonat.com/shop/products/6000006005?globallanguage=en&globalmarket=au" in links
     assert "https://corp.mymonat.com/shop/products/6000006005so?globallanguage=en&globalmarket=au" in links
 
-    subs = [c[2]["json"]["data"]["name"] for c in calls[2:]]
-    assert subs == ["AU · Se agotó · Producto 3 & Co", "AU · Volvió a tener stock · Barrier Booster™ Ceramide Infusion Toner"]
-    assert all(c[1].endswith("/tasks/T1/subtasks") for c in calls[2:])
-    for c in calls[2:]:
-        ET.fromstring(c[2]["json"]["data"]["html_notes"])
+    assert any("Producto 3 &amp; Co" in ET.tostring(li, encoding="unicode") for li in root.iter("li"))
+    # Solo la tarea: ninguna llamada a /subtasks
+    assert len([c for c in calls if c[0] == "POST"]) == 1
+    assert not any("/subtasks" in c[1] for c in calls)
 
     # Con proyecto configurado no consulta el espacio de trabajo
     calls.clear()
