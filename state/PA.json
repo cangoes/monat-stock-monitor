@@ -17,12 +17,12 @@
       "url": "https://shop.mymonat.com/shop/products/monat-junior-gentle-detangler-6000000152?taxon_id=30"
     },
     "6000000153": {
-      "name": "MONAT Junior™ Gentle Shampoo - Agotado",
-      "out": true,
+      "name": "MONAT Junior™️ Champú suave",
+      "out": false,
       "skus": [
-        "6000000153SO"
+        "6000000153"
       ],
-      "url": "https://shop.mymonat.com/shop/products/monat-junior-gentle-shampoo-6000000153so?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/monat-junior-gentle-shampoo-6000000153?taxon_id=30"
     },
     "6000000175": {
       "name": "REJUVABEADS®",
@@ -601,5 +601,5 @@
       "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-system-6000007392?taxon_id=30"
     }
   },
-  "scanned_at": "2026-11-18T21:20:06.484201+00:00"
+  "scanned_at": "2026-11-23T23:10:56.818335+00:00"
 }

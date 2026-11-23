@@ -330,11 +330,11 @@
     },
     "6000001122": {
       "name": "MONAT FOR MEN™ Essential Face Moisturizer",
-      "out": false,
+      "out": true,
       "skus": [
-        "6000001122"
+        "6000001122SO"
       ],
-      "url": "https://shop.mymonat.com/shop/products/essential-face-moisturizer?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/monat-for-men-essential-face-moisturizer-out-of-stock-6000001122so?taxon_id=30"
     },
     "6000001123": {
       "name": "MONAT FOR MEN™ Essential Face Scrub",
@@ -706,7 +706,7 @@
     },
     "6000003149": {
       "name": "Smoothing Anti-Frizz™ System I",
-      "out": true,
+      "out": false,
       "skus": [
         "6000003149"
       ],
@@ -1281,5 +1281,5 @@
       "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-system-6000007344?taxon_id=30"
     }
   },
-  "scanned_at": "2026-11-18T21:20:06.484201+00:00"
+  "scanned_at": "2026-11-23T23:10:56.818335+00:00"
 }

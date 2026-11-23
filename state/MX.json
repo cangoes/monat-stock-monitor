@@ -105,12 +105,12 @@
       "url": "https://shop.mymonat.com/shop/products/volumizing-revive-shampoo-6000006540?taxon_id=30"
     },
     "6000006541": {
-      "name": "Solución Purificante de Vinagre - Agotado",
-      "out": true,
+      "name": "Solución Purificante de Vinagre",
+      "out": false,
       "skus": [
-        "6000006541SO"
+        "6000006541"
       ],
-      "url": "https://shop.mymonat.com/shop/products/copy-of-purifying-vinegar-rinse-9d4a0ec6-853f-40b6-98d4-bf7140d1f145?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/purifying-vinegar-rinse-6000006541?taxon_id=30"
     },
     "6000006542": {
       "name": "Champú densificante IR Clinical™",
@@ -225,12 +225,12 @@
       "url": "https://shop.mymonat.com/shop/products/monat-studio-one-heat-protectant-spray-6000006569?taxon_id=30"
     },
     "6000006570": {
-      "name": "Acondicionador Renew™ - Agotado",
+      "name": "Acondicionador Renew™",
       "out": false,
       "skus": [
-        "6000006570SO"
+        "6000006570"
       ],
-      "url": "https://shop.mymonat.com/shop/products/renew-conditioner-6000006570so?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/renew-conditioner-6000006570?taxon_id=30"
     },
     "6000006765": {
       "name": "MONAT BOND IQ™ Champú fortificante",
@@ -289,12 +289,12 @@
       "url": "https://shop.mymonat.com/shop/products/duo-volumizing-revive-mex?taxon_id=30"
     },
     "6000006796": {
-      "name": "Dúo Hidratante Renew™ - Agotado",
-      "out": true,
+      "name": "Dúo Hidratante Renew™",
+      "out": false,
       "skus": [
-        "6000006796SO"
+        "6000006796"
       ],
-      "url": "https://shop.mymonat.com/shop/products/hydrating-renew-duo-out-of-stock-6000006796so?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/duo-hidratante-renew-mex?taxon_id=30"
     },
     "6000006797": {
       "name": "Dúo IR Clinical™",
@@ -465,5 +465,5 @@
       "url": "https://shop.mymonat.com/shop/products/monat-curl-perfection-system-mex?taxon_id=30"
     }
   },
-  "scanned_at": "2026-11-18T21:20:06.484201+00:00"
+  "scanned_at": "2026-11-23T23:10:56.818335+00:00"
 }

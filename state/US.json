@@ -34,11 +34,11 @@
     },
     "6000000153": {
       "name": "MONAT Junior™ Gentle Shampoo",
-      "out": true,
+      "out": false,
       "skus": [
-        "6000000153SO"
+        "6000000153"
       ],
-      "url": "https://shop.mymonat.com/shop/products/monat-junior-gentle-shampoo-6000000153so?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/monat-junior-gentle-shampoo-6000000153?taxon_id=30"
     },
     "6000000174": {
       "name": "Lash & Brow Enhancing Serum",
@@ -306,11 +306,11 @@
     },
     "6000001122": {
       "name": "MONAT FOR MEN™ Essential Face Moisturizer",
-      "out": true,
+      "out": false,
       "skus": [
-        "6000001122SO"
+        "6000001122"
       ],
-      "url": "https://shop.mymonat.com/shop/products/monat-for-men-essential-face-moisturizer-out-of-stock-6000001122so?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/essential-face-moisturizer?taxon_id=30"
     },
     "6000001123": {
       "name": "MONAT FOR MEN™ Essential Face Scrub",
@@ -346,11 +346,11 @@
     },
     "6000001414": {
       "name": "Soothing Micellar Shampoo",
-      "out": true,
+      "out": false,
       "skus": [
-        "6000001414SO"
+        "6000001414"
       ],
-      "url": "https://shop.mymonat.com/shop/products/soothing-micellar-shampoo-6000001414so?taxon_id=30"
+      "url": "https://shop.mymonat.com/shop/products/soothing-micellar-shampoo?taxon_id=30"
     },
     "6000001457": {
       "name": "MONAT Hydrate & Refresh™ Face Mist",
@@ -1145,5 +1145,5 @@
       "url": "https://shop.mymonat.com/shop/products/monat-gloss-mode-system?taxon_id=30"
     }
   },
-  "scanned_at": "2026-11-18T21:20:06.484201+00:00"
+  "scanned_at": "2026-11-23T23:10:56.818335+00:00"
 }
